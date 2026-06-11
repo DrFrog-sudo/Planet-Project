@@ -64,7 +64,6 @@ vect mul_vect(vect v1, vect v2){
 //Calcul Force
 
 vect gravitation(planete p1, planete p2){
-    double G = 6.67430e-11;
     double numerateur = G * p1.masse * p2.masse;
     double r=distance(p2.pos_vit.pos, p1.pos_vit.pos);
     double denominateur = valeur_absolue(r*r*r);
@@ -98,6 +97,9 @@ point point_suivant(point point_actuel, planete p_etudie, planete soleil){
     new_point.pos=new_pos;
     new_point.vit=new_vit;
     new_point.temps=point_actuel.temps+PasTemps;
+    new_point.ep=p_energie(p_etudie,soleil,new_point);
+    new_point.ec=c_energie(p_etudie,new_point);
+    new_point.et=t_energie(p_etudie,soleil,new_point);
     return new_point;
 }
 
@@ -114,6 +116,25 @@ trajectoire traj_planete(planete p, planete soleil, int t_max){
     }
     return traj;
 }
+
+//Calcul energie
+double p_energie(planete p, planete soleil,point point){
+    double numerateur=-G*p.masse*soleil.masse;
+    double denominateur=distance(point.pos, soleil.pos_vit.pos);
+    return numerateur/denominateur;
+}
+
+double c_energie(planete p,point point){
+    double result=0.5*p.masse*(point.vit.x*point.vit.x+point.vit.y*point.vit.y+point.vit.z*point.vit.z);
+    return result;
+}
+
+double t_energie(planete p, planete soleil,point point){
+    double result=p_energie(p,soleil,point)+c_energie(p,point);
+    return result;
+}
+
+
 
 //Affichage
 void afficher_vect(vect v){
@@ -136,6 +157,12 @@ void export_json(trajectoire traj, char *nom_fichier){
         fprintf(fichier,"[%f,%f,%f],",traj.tab_points[i].vit.x,traj.tab_points[i].vit.y,traj.tab_points[i].vit.z);
         //Print temps
         fprintf(fichier,"%d",traj.tab_points[i].temps);
+        //Print energie cinetique
+        fprintf(fichier,",%f",traj.tab_points[i].ec);
+        //Print energie potentielle
+        fprintf(fichier,",%f",traj.tab_points[i].ep);
+        //Print energie totale
+        fprintf(fichier,",%f",traj.tab_points[i].et);
         fprintf(fichier,"]\n");
         if(i < traj.nb_points - 1) {
             fprintf(fichier,",");
