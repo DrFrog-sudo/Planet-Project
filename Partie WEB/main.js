@@ -1,18 +1,23 @@
 function preload() {
     data = loadJSON('terre.json');
+    imgSoleil = loadImage('sunTexture.jpg');
+    imgTerre = loadImage('terreTexture.jpg');
+    imgMercure = loadImage('mercury.jpg');
+    imgVenus = loadImage('venus.jpg');
+    imgMars = loadImage('mars.jpg');
 }
 
 function setup() {
     W = windowWidth;
     H = windowHeight;
-    createCanvas(W, H);
+    createCanvas(W, H, WEBGL);
 
-    for (let i = 0; i < 300; i++) {
+    for (let i = 0; i < 500; i++) {
         stars.push({
-            x: random(W),
-            y: random(H),
-            size: random(1, 3),
-            brightness: random(150, 255)
+            x: random(-2000, 2000),
+            y: random(-2000, 2000),
+            z: random(-2000, 2000),
+            size: random(1.5, 4)
         });
     }
 
@@ -30,7 +35,6 @@ function setup() {
     sliderSpeed.position(15, 15);
     sliderSpeed.style('width', '250px');
     sliderSpeed.style('accent-color', '#4da6ff');
-    sliderSpeed.style('cursor', 'pointer');
 
     sliderSpeedLabel = createP('');
     sliderSpeedLabel.parent(panel);
@@ -48,12 +52,11 @@ function setup() {
     timeLabel.style('font-family', 'Arial');
     timeLabel.style('margin', '0');
 
-    sliderZoom = createSlider(5, 50, 50, 1);
+    sliderZoom = createSlider(5, 50, 25, 1);
     sliderZoom.parent(panel);
     sliderZoom.position(15, 95);
     sliderZoom.style('width', '250px');
     sliderZoom.style('accent-color', '#4da6ff');
-    sliderZoom.style('cursor', 'pointer');
 
     sliderZoomLabel = createP('');
     sliderZoomLabel.parent(panel);
@@ -82,18 +85,21 @@ function setup() {
     methodSelect.style('background', '#1a1f2e');
     methodSelect.style('color', 'white');
     methodSelect.style('font-size', '14px');
-    methodSelect.style('font-family', 'Arial');
     methodSelect.style('outline', 'none');
-    methodSelect.style('cursor', 'pointer');
 
     methodSelect.changed(() => {
         selectedMethod = methodSelect.value();
         frameIndex = 0;
-        trail = [];
+        trailEarth = [];
+        trailMercury = [];
+        trailVenus = [];
+        trailMars = [];
         energyHistory = [];
         totalSteps = 0;
-        earthRawX = 0;
-        earthRawY = 0;
+        earthRawX = 0; earthRawY = 0;
+        mercuryRawX = 0; mercuryRawY = 0;
+        venusRawX = 0; venusRawY = 0;
+        marsRawX = 0; marsRawY = 0;
     });
 
     if (data) {
@@ -101,8 +107,7 @@ function setup() {
         if (methodKeys.length === 0) methodKeys = Object.keys(data);
 
         for (let key of methodKeys) {
-            let label = key.replace(/Terre\s*-\s*/i, '')
-                           .replace(/Euler Asym/i, 'Euler asymétrique');
+            let label = key.replace(/Terre\s*-\s*/i, '').replace(/Euler Asym/i, 'Euler asymétrique');
             methodSelect.option(label, key);
         }
 
@@ -117,34 +122,40 @@ function draw() {
     const zoom = sliderZoom.value() / 10;
     sliderZoomLabel.html(`Zoom: ${zoom.toFixed(1)}x`);
 
-    // Appels des modules de rendu graphique (définis dans helpers.js)
+    orbitControl(2, 2, 0.1);
+
     drawStars();
-    drawSoleil();
-    drawTerre(zoom);
+    drawSoleil(zoom);
+    updateAndDrawPlanets(zoom);
     drawGraphs();
 }
 
-// --- Gestion des Interactions Souris ---
-
 function mousePressed() {
-    // Évite de déclencher la sélection si on clique sur la zone de contrôle de l'UI
-    if (mouseX < 260 && mouseY < 150) return;
+    if (mouseX < 260 && mouseY < 240) return;
 
     const zoom = sliderZoom.value() / 10;
-    let ex = earthRawX * zoom + W / 2 + offsetX;
-    let ey = earthRawY * zoom + H / 2 + offsetY;
-    let r = 20 * zoom;
+    let mx = mouseX - W / 2;
+    let my = mouseY - H / 2;
 
-    if (dist(mouseX, mouseY, ex, ey) < r / 2 + 10) {
-        selectedPlanet = (selectedPlanet === 'Terre') ? null : 'Terre';
+    let planetsToCheck = [
+        { name: 'Terre', x: earthRawX, y: earthRawY, r: 14 },
+        { name: 'Mercure', x: mercuryRawX, y: mercuryRawY, r: 8 },
+        { name: 'Venus', x: venusRawX, y: venusRawY, r: 13 },
+        { name: 'Mars', x: marsRawX, y: marsRawY, r: 10 }
+    ];
+
+    for (let p of planetsToCheck) {
+        let ex = p.x * zoom;
+        let ey = p.y * zoom;
+        let r = p.r * zoom;
+        if (dist(mx, my, ex, ey) < r + 15) {
+            selectedPlanet = (selectedPlanet === p.name) ? null : p.name;
+            return;
+        }
     }
-}
 
-function mouseDragged() {
-    // Permet le déplacement de la caméra (Pan)
-    if (mouseX > 260 || mouseY > 150) {
-        offsetX += mouseX - pmouseX;
-        offsetY += mouseY - pmouseY;
+    if (dist(mx, my, 0, 0) < 28 * zoom) {
+        selectedPlanet = null;
     }
 }
 
@@ -152,24 +163,4 @@ function windowResized() {
     W = windowWidth;
     H = windowHeight;
     resizeCanvas(W, H);
-
-    // regenerate stars to fill the viewport
-    stars = [];
-    for (let i = 0; i < 300; i++) {
-        stars.push({
-            x: random(W),
-            y: random(H),
-            size: random(1, 3),
-            brightness: random(150, 255)
-        });
-    }
-
-    if (panel) {
-        panel.position(5, 5);
-        const panelW = Math.min(280, W * 0.28);
-        panel.size(panelW, 240);
-        if (sliderSpeed) sliderSpeed.style('width', (panelW - 30) + 'px');
-        if (sliderZoom) sliderZoom.style('width', (panelW - 30) + 'px');
-        if (methodSelect) methodSelect.style('width', (panelW - 30) + 'px');
-    }
 }

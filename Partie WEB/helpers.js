@@ -1,5 +1,3 @@
-// --- Formateurs de texte ---
-
 function formatSpeed(h) {
     if (h < 24) return `${h} hour${h === 1 ? '' : 's'}`;
     if (h < 168) return `${(h / 24).toFixed(1)} days`;
@@ -15,44 +13,49 @@ function formatElapsed(h) {
     return `${floor(h / 8760)}y ${floor(h % 8760 / 720)}mo`;
 }
 
-// --- Fonctions de rendu graphique ---
-
 function drawStars() {
+    push();
     noStroke();
-    for (const { x, y, size, brightness } of stars) {
-        fill(brightness);
-        circle(x, y, size);
+    fill(255);
+    for (const s of stars) {
+        push();
+        translate(s.x, s.y, s.z);
+        box(s.size);
+        pop();
     }
+    pop();
 }
 
-function drawSoleil() {
+function drawSoleil(zoomFactor) {
+    push();
+    translate(0, 0, 0);
+    rotateY(frameCount * 0.002);
     noStroke();
-    const zoomFactor = sliderZoom.value() / 10;
-    fill(255, 220, 0, 40);  circle(W / 2 + offsetX, H / 2 + offsetY, 80 * zoomFactor);
-    fill(255, 180, 0);      circle(W / 2 + offsetX, H / 2 + offsetY, 50 * zoomFactor);
-    fill(255, 150, 0);      circle(W / 2 + offsetX, H / 2 + offsetY, 30 * zoomFactor);
-    fill(255, 120, 0);      circle(W / 2 + offsetX, H / 2 + offsetY, 20 * zoomFactor);
-    fill(255, 100, 0);      circle(W / 2 + offsetX, H / 2 + offsetY, 10 * zoomFactor);
-    fill(255, 80, 0);       circle(W / 2 + offsetX, H / 2 + offsetY, 5 * zoomFactor);
-    fill(255, 60, 0);       circle(W / 2 + offsetX, H / 2 + offsetY, 3 * zoomFactor);
-    fill(255, 40, 0);       circle(W / 2 + offsetX, H / 2 + offsetY, 2 * zoomFactor);
-}
-
-function drawTerre(zoom) {
-    let trajectory;
-
-    if (selectedMethod && data[selectedMethod]) {
-        trajectory = data[selectedMethod];
-    } else if (data["Terre"]) {
-        trajectory = data["Terre"];
+    if (imgSoleil) {
+        texture(imgSoleil);
     } else {
-        trajectory = data[Object.keys(data)[0]];
+        fill(255, 230, 0);
     }
+    sphere(28 * zoomFactor);
+    pop();
+}
 
-    if (!trajectory || trajectory.length === 0) return;
+function updateAndDrawPlanets(zoom) {
+    let baseKey = selectedMethod || Object.keys(data)[0];
+    if (!baseKey || !data[baseKey]) return;
 
-    const sampleInterval = trajectory.length > 1
-        ? Math.max(1, Math.round(trajectory[1][2] - trajectory[0][2]))
+    let trajectoryEarth = data[baseKey];
+    
+    let keyMercury = baseKey.replace(/Terre/i, 'Mercure');
+    let keyVenus = baseKey.replace(/Terre/i, 'Venus');
+    let keyMars = baseKey.replace(/Terre/i, 'Mars');
+
+    let trajectoryMercury = data[keyMercury] || trajectoryEarth;
+    let trajectoryVenus = data[keyVenus] || trajectoryEarth;
+    let trajectoryMars = data[keyMars] || trajectoryEarth;
+
+    const sampleInterval = trajectoryEarth.length > 1
+        ? Math.max(1, Math.round(trajectoryEarth[1][2] - trajectoryEarth[0][2]))
         : 60;
 
     const speedFactor = sliderSpeed.value();
@@ -60,88 +63,127 @@ function drawTerre(zoom) {
 
     sliderSpeedLabel.html(`Speed: ${formatSpeed(speedFactor)} per frame`);
 
+    let maxTrailPoints = TRAIL_LENGTH / ((speedFactor * 3600) / sampleInterval);
+    if (maxTrailPoints < 2) maxTrailPoints = 2;
+
     if (earthRawX !== 0 || earthRawY !== 0) {
-        trail.push({ x: earthRawX, y: earthRawY });
-        let maxTrailPoints = TRAIL_LENGTH / ((speedFactor * 3600) / sampleInterval);
-        if (maxTrailPoints < 2) maxTrailPoints = 2;
-        while (trail.length > maxTrailPoints) {
-            trail.shift();
+        trailEarth.push({ x: earthRawX, y: earthRawY });
+        while (trailEarth.length > maxTrailPoints) trailEarth.shift();
+    }
+    if (mercuryRawX !== 0 || mercuryRawY !== 0) {
+        trailMercury.push({ x: mercuryRawX, y: mercuryRawY });
+        while (trailMercury.length > maxTrailPoints) trailMercury.shift();
+    }
+    if (venusRawX !== 0 || venusRawY !== 0) {
+        trailVenus.push({ x: venusRawX, y: venusRawY });
+        while (trailVenus.length > maxTrailPoints) trailVenus.shift();
+    }
+    if (marsRawX !== 0 || marsRawY !== 0) {
+        trailMars.push({ x: marsRawX, y: marsRawY });
+        while (trailMars.length > maxTrailPoints) trailMars.shift();
+    }
+
+    frameIndex = (frameIndex + advanceBy) % trajectoryEarth.length;
+
+    if (!trajectoryEarth[frameIndex] || !trajectoryEarth[0]) return;
+
+    earthRawX = trajectoryEarth[frameIndex][0][0] / 500_000_000;
+    earthRawY = trajectoryEarth[frameIndex][0][1] / 500_000_000;
+
+    if (data[keyMercury] && data[keyMercury][frameIndex]) {
+        mercuryRawX = data[keyMercury][frameIndex][0][0] / 500_000_000;
+        mercuryRawY = data[keyMercury][frameIndex][0][1] / 500_000_000;
+    } else {
+        mercuryRawX = earthRawX * 0.4;
+        mercuryRawY = earthRawY * 0.4;
+    }
+
+    if (data[keyVenus] && data[keyVenus][frameIndex]) {
+        venusRawX = data[keyVenus][frameIndex][0][0] / 500_000_000;
+        venusRawY = data[keyVenus][frameIndex][0][1] / 500_000_000;
+    } else {
+        venusRawX = earthRawX * 0.7;
+        venusRawY = earthRawY * 0.7;
+    }
+
+    if (data[keyMars] && data[keyMars][frameIndex]) {
+        marsRawX = data[keyMars][frameIndex][0][0] / 500_000_000;
+        marsRawY = data[keyMars][frameIndex][0][1] / 500_000_000;
+    } else {
+        marsRawX = earthRawX * 1.5;
+        marsRawY = earthRawY * 1.5;
+    }
+
+    let activeTrajectory = trajectoryEarth;
+    if (selectedPlanet === 'Mercure') activeTrajectory = trajectoryMercury;
+    if (selectedPlanet === 'Venus') activeTrajectory = trajectoryVenus;
+    if (selectedPlanet === 'Mars') activeTrajectory = trajectoryMars;
+
+    if (activeTrajectory && activeTrajectory[frameIndex] && activeTrajectory[0]) {
+        let deltaEc = activeTrajectory[frameIndex][3] - activeTrajectory[0][3];
+        let deltaEp = activeTrajectory[frameIndex][4] - activeTrajectory[0][4];
+        let deltaEm = activeTrajectory[frameIndex][5] - activeTrajectory[0][5];
+
+        energyHistory.push({ dEc: deltaEc, dEp: deltaEp, dEm: deltaEm });
+        while (energyHistory.length > MAX_GRAPH_POINTS) {
+            energyHistory.shift();
         }
     }
 
-    frameIndex = (frameIndex + advanceBy) % trajectory.length;
-
-    if (!trajectory[frameIndex] || !trajectory[0]) return;
-
-    const [px, py] = trajectory[frameIndex][0];
-    earthRawX = px / 500_000_000;
-    earthRawY = py / 500_000_000;
-
-    let currentEc = trajectory[frameIndex][3];
-    let currentEp = trajectory[frameIndex][4];
-    let currentEm = trajectory[frameIndex][5];
-
-    let initEc = trajectory[0][3];
-    let initEp = trajectory[0][4];
-    let initEm = trajectory[0][5];
-
-    let deltaEc = currentEc - initEc;
-    let deltaEp = currentEp - initEp;
-    let deltaEm = currentEm - initEm;
-
-    energyHistory.push({ dEc: deltaEc, dEp: deltaEp, dEm: deltaEm });
-    if (energyHistory.length > MAX_GRAPH_POINTS) {
-        energyHistory.shift();
-    }
-
-    if (trail.length > 1) {
-        noFill();
-        stroke(0, 120, 255, 200);
-        strokeWeight(1.5);
-        beginShape();
-        for (const { x, y } of trail) {
-            vertex(x * zoom + W / 2 + offsetX, y * zoom + H / 2 + offsetY);
-        }
-        endShape();
-    }
-
-    let ex = earthRawX * zoom + W / 2 + offsetX;
-    let ey = earthRawY * zoom + H / 2 + offsetY;
-    let r = 20 * zoom;
-
-    noStroke();
-    fill(0, 120, 255);
-    circle(ex, ey, r);
-
-    fill(34, 139, 34);
-    circle(ex - r * 0.2, ey - r * 0.1, r * 0.4);
-    circle(ex + r * 0.2, ey + r * 0.2, r * 0.3);
-    circle(ex - r * 0.1, ey + r * 0.3, r * 0.2);
-
-    if (selectedPlanet === 'Terre') {
-        noFill();
-        stroke(255, 255, 255, 150);
-        strokeWeight(2);
-        circle(ex, ey, r + 10);
-    }
+    drawPlanetWithTrail(earthRawX, earthRawY, 14, imgTerre, trailEarth, [0, 140, 255], 0.015, zoom);
+    drawPlanetWithTrail(mercuryRawX, mercuryRawY, 8, imgMercure, trailMercury, [150, 150, 150], 0.01, zoom);
+    drawPlanetWithTrail(venusRawX, venusRawY, 13, imgVenus, trailVenus, [220, 180, 120], 0.005, zoom);
+    drawPlanetWithTrail(marsRawX, marsRawY, 10, imgMars, trailMars, [255, 100, 50], 0.012, zoom);
 
     totalSteps += advanceBy;
     timeLabel.html(`Elapsed: ${formatElapsed(totalSteps * sampleInterval / 3600)}`);
 }
 
-function drawGraphs() {
-    if (selectedPlanet !== 'Terre' || energyHistory.length < 2) return;
+function drawPlanetWithTrail(rx, ry, radius, img, trailArray, fallbackColor, rotSpeed, zoom) {
+    if (trailArray.length > 1) {
+        push();
+        noFill();
+        stroke(fallbackColor[0], fallbackColor[1], fallbackColor[2], 140);
+        strokeWeight(1.5);
+        beginShape();
+        for (const pt of trailArray) {
+            vertex(pt.x * zoom, pt.y * zoom, 0);
+        }
+        endShape();
+        pop();
+    }
 
-    let gW = 220;
-    let gH = 90;
-    let yStart = H - gH - 100; 
-    let totalWidth = 3 * gW + 40; 
-    let startX = (W - totalWidth) / 2;
-    let xStarts = [startX, startX + gW + 20, startX + 2 * (gW + 20)];
+    push();
+    translate(rx * zoom, ry * zoom, 0);
+    rotateY(frameCount * rotSpeed);
+    noStroke();
+    if (img) {
+        texture(img);
+    } else {
+        fill(fallbackColor[0], fallbackColor[1], fallbackColor[2]);
+    }
+    sphere(radius * zoom);
+    pop();
+}
+
+function drawGraphs() {
+    if (!selectedPlanet || energyHistory.length < 2) return;
+
+    push();
+    resetMatrix();
+    camera(0, 0, (height/2.0) / tan(PI*30.0 / 180.0), 0, 0, 0, 0, 1, 0);
+    translate(-W / 2, -H / 2, 0); 
+
+    let gW = 240;
+    let gH = 110;
+    let padding = 20;
+    let xStart = W - gW - padding; 
+    let totalHeight = 3 * gH + 2 * padding;
+    let yStart = (H - totalHeight) / 2;
     
     let keys = ['dEc', 'dEp', 'dEm'];
-    let titles = ['ΔEc', 'ΔEp', 'ΔEm']; 
-    let colors = [color(255, 80, 80), color(80, 255, 80), color(255, 255, 80)];
+    let titles = [`ΔEc (${selectedPlanet})`, `ΔEp (${selectedPlanet})`, `ΔEm (${selectedPlanet})`]; 
+    let colors = [[255, 75, 75], [75, 255, 75], [255, 255, 75]];
 
     let globalMin = energyHistory[0].dEc;
     let globalMax = energyHistory[0].dEc;
@@ -163,41 +205,39 @@ function drawGraphs() {
     }
 
     for (let i = 0; i < 3; i++) {
-        let xStart = xStarts[i];
+        let currentY = yStart + i * (gH + padding);
         let key = keys[i];
 
-        fill(15, 15, 25, 230);
-        stroke(0, 120, 255, 60);
+        fill(15, 20, 35, 230);
+        stroke(0, 120, 255, 100);
         strokeWeight(1.5);
-        rect(xStart, yStart, gW, gH, 10);
+        rect(xStart, currentY, gW, gH, 12);
 
-        let yZero = map(0, globalMin, globalMax, yStart + gH - 15, yStart + 30);
-        if (isFinite(yZero) && yZero > yStart + 30 && yZero < yStart + gH - 15) {
-            stroke(255, 255, 255, 40);
+        let yZero = map(0, globalMin, globalMax, currentY + gH - 15, currentY + 30);
+        if (isFinite(yZero) && yZero > currentY + 30 && yZero < currentY + gH - 15) {
+            stroke(255, 255, 255, 50);
             strokeWeight(1);
-            line(xStart + 10, yZero, xStart + gW - 10, yZero);
+            line(xStart + 15, yZero, xStart + gW - 15, yZero);
         }
 
         noStroke();
         fill(240);
-        textSize(12);
-        textStyle(BOLD);
+        textSize(11);
         textAlign(LEFT, TOP);
-        text(titles[i], xStart + 10, yStart + 8);
+        text(titles[i], xStart + 15, currentY + 10);
 
         noFill();
-        stroke(colors[i]);
-        strokeWeight(2); 
-        strokeJoin(ROUND);
+        stroke(colors[i][0], colors[i][1], colors[i][2]);
+        strokeWeight(2);
         beginShape();
         for (let j = 0; j < energyHistory.length; j++) {
-            let vx = map(j, 0, energyHistory.length - 1, xStart + 10, xStart + gW - 10);
-            let vy = map(energyHistory[j][key], globalMin, globalMax, yStart + gH - 15, yStart + 30);
+            let vx = map(j, 0, energyHistory.length - 1, xStart + 15, xStart + gW - 15);
+            let vy = map(energyHistory[j][key], globalMin, globalMax, currentY + gH - 15, currentY + 30);
             if (isFinite(vx) && isFinite(vy)) {
-                vertex(vx, vy);
+                vertex(vx, vy, 0);
             }
         }
         endShape();
-        textStyle(NORMAL);
     }
+    pop();
 }
