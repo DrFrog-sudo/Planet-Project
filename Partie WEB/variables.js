@@ -1,5 +1,6 @@
-const W = 1200;
-const H = 800;
+let W = window.innerWidth || 1200;
+let H = window.innerHeight || 800;
+let panel;
 const TRAIL_LENGTH = 50000;
 const MAX_GRAPH_POINTS = 200;
 
