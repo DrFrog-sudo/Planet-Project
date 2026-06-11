@@ -14,7 +14,7 @@ let sliderZoom, sliderZoomLabel;
 let offsetX = 0;
 let offsetY = 0;
 
-let selectedPlanet = null;
+let selectedPlanet = 'Terre';
 let energyHistory = [];
 let methodSelect;
 let selectedMethod = '';
@@ -148,13 +148,13 @@ function drawTerre(zoom) {
     earthRawY = py / 500_000_000;
 
     let currentEc = trajectory[frameIndex][3];
-    let currentEp = abs(trajectory[frameIndex][4]);
-    let currentEm = currentEc + currentEp;
+    let currentEp = trajectory[frameIndex][4];
+    let currentEm = trajectory[frameIndex][5];
 
     // On récupère les valeurs au tout premier point , quand t=0
     let initEc = trajectory[0][3];
-    let initEp = abs(trajectory[0][4]);
-    let initEm = initEc + initEp;
+    let initEp = trajectory[0][4];
+    let initEm = trajectory[0][5];
 
     // On soustrait la valeur initiale pour n'afficher que le delta
     let deltaEc = currentEc - initEc;
@@ -202,12 +202,15 @@ function drawTerre(zoom) {
 function drawGraphs() {
     if (selectedPlanet !== 'Terre' || energyHistory.length < 2) return;
 
-    let gW = 280;
-    let gH = 140;
-    let xStart = W - gW - 20;
-    let yStarts = [40, 200, 360];
+    let gW = 220;
+    let gH = 90;
+    let yStart = H - gH - 100; 
+    let totalWidth = 3 * gW + 40; // 2 espaces de 20px
+    let startX = (W - totalWidth) / 2;
+    let xStarts = [startX, startX + gW + 20, startX + 2 * (gW + 20)];
+    
     let keys = ['dEc', 'dEp', 'dEm'];
-    let titles = ['ΔEc (Variation Instantanée)', 'ΔEp (Variation Instantanée)', 'ΔEm (Variation Instantanée)'];
+    let titles = ['ΔEc', 'ΔEp', 'ΔEm']; // Titres plus courts pour les petits graphes
     let colors = [color(255, 80, 80), color(80, 255, 80), color(255, 255, 80)];
 
     let globalMin = energyHistory[0].dEc;
@@ -230,42 +233,42 @@ function drawGraphs() {
     }
 
     for (let i = 0; i < 3; i++) {
-        let yStart = yStarts[i];
+        let xStart = xStarts[i];
         let key = keys[i];
 
         fill(15, 15, 25, 230);
         stroke(0, 120, 255, 60);
         strokeWeight(1.5);
-        rect(xStart, yStart, gW, gH, 12);
+        rect(xStart, yStart, gW, gH, 10);
 
-        let yZero = map(0, globalMin, globalMax, yStart + gH - 20, yStart + 40);
-        if (isFinite(yZero) && yZero > yStart + 40 && yZero < yStart + gH - 20) {
+        let yZero = map(0, globalMin, globalMax, yStart + gH - 15, yStart + 30);
+        if (isFinite(yZero) && yZero > yStart + 30 && yZero < yStart + gH - 15) {
             stroke(255, 255, 255, 40);
             strokeWeight(1);
-            line(xStart + 15, yZero, xStart + gW - 15, yZero);
+            line(xStart + 10, yZero, xStart + gW - 10, yZero);
         }
 
         noStroke();
         fill(240);
         textSize(12);
-        fontStyle(BOLD);
+        textStyle(BOLD);
         textAlign(LEFT, TOP);
-        text(titles[i], xStart + 15, yStart + 12);
+        text(titles[i], xStart + 10, yStart + 8);
 
         noFill();
         stroke(colors[i]);
-        strokeWeight(2.5);
+        strokeWeight(2); // Trait un peu plus fin pour les petits graphes
         strokeJoin(ROUND);
         beginShape();
         for (let j = 0; j < energyHistory.length; j++) {
-            let vx = map(j, 0, energyHistory.length - 1, xStart + 15, xStart + gW - 15);
-            let vy = map(energyHistory[j][key], globalMin, globalMax, yStart + gH - 20, yStart + 40);
+            let vx = map(j, 0, energyHistory.length - 1, xStart + 10, xStart + gW - 10);
+            let vy = map(energyHistory[j][key], globalMin, globalMax, yStart + gH - 15, yStart + 30);
             if (isFinite(vx) && isFinite(vy)) {
                 vertex(vx, vy);
             }
         }
         endShape();
-        fontStyle(NORMAL);
+        textStyle(NORMAL);
     }
 }
 

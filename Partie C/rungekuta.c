@@ -4,6 +4,7 @@
 #include "fonction.h"
 
 point rk4_suivant(point point_actuel, planete p_etudie, planete soleil) {
+    p_etudie.pos_vit = point_actuel;
     point new_point;
     vect k1r, k1v;
     vect k2r, k2v;
