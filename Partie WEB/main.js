@@ -246,6 +246,14 @@ function drawGraphs() {
             stroke(255, 255, 255, 40);
             strokeWeight(1);
             line(xStart + 10, yZero, xStart + gW - 10, yZero);
+            
+            // Label 0
+            noStroke();
+            fill(255, 255, 255, 120);
+            textSize(9);
+            textStyle(NORMAL);
+            textAlign(RIGHT, BOTTOM);
+            text("0", xStart + gW - 12, yZero - 2);
         }
 
         noStroke();
@@ -254,6 +262,19 @@ function drawGraphs() {
         textStyle(BOLD);
         textAlign(LEFT, TOP);
         text(titles[i], xStart + 10, yStart + 8);
+        
+        // Labels Max / Min
+        noStroke();
+        fill(255, 255, 255, 120);
+        textSize(9);
+        textStyle(NORMAL);
+        textAlign(RIGHT, TOP);
+        let maxStr = globalMax > 0 ? "+" + globalMax.toExponential(1) : globalMax.toExponential(1);
+        text(maxStr, xStart + gW - 12, yStart + 32);
+        
+        textAlign(RIGHT, BOTTOM);
+        let minStr = globalMin > 0 ? "+" + globalMin.toExponential(1) : globalMin.toExponential(1);
+        text(minStr, xStart + gW - 12, yStart + gH - 17);
 
         noFill();
         stroke(colors[i]);
