@@ -11,6 +11,7 @@ let frameIndex = 0;
 let trail = [];
 let TRAIL_LENGTH = 50000;
 let slider;
+let speedFactor = 1;
 
 function setup() {
     createCanvas(windowWidth, windowHeight);
@@ -22,32 +23,33 @@ function setup() {
             brightness: random(150, 255)
         });
     }
-    slider = createSlider(1, 100, 1);
+    slider = createSlider(1, 8064, 24);
     slider.position(10, 10);
 }
 
 function preload() {
-    data = loadJSON('mercury.json');
+    data = loadJSON('terre.json');
 }
 
 function draw() {
     background(0);
 
-    trajectoire = data["mercury-euler"];
-
+    trajectoire = data["Terre"];
+    //LE ETWAAAALEESSSSSSSSSSSSSSSSSS
     noStroke();
     for (let star of stars) {
         fill(star.brightness);
         circle(star.x, star.y, star.size);
     }
-    //SOLEIL
+
+    //LE SOLEEEEEEIIIIIL WAHOUUUUUUUU
     noStroke();
     fill(255, 220, 0, 40);
     circle(width / 2, height / 2, 80);
     fill(255, 180, 0);
     circle(width / 2, height / 2, 50);
 
-    //TERRE
+    //LA TEEEEEERRREEEE
     if (trajectoire && trajectoire.length > 0) {
         tPoint = trajectoire[frameIndex];
         position = tPoint[0];
