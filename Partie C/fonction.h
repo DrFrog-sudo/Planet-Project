@@ -1,8 +1,11 @@
 #ifndef FONCTION_H
 #define FONCTION_H
 
+#include <stdio.h>
+
 #define PasTemps 3600 // En seconde
 #define G 6.67430e-11 // Constante gravitation
+#define nb_annee 15 // nombre d'année à simuler
 
 typedef struct vect{
     double x;
@@ -49,7 +52,15 @@ vect acceleration(planete p1, planete p2);
 vect calcul_vitesse_future(point p1, vect acceleration);
 vect calcul_position_future(point p1, vect vitesse);
 point point_suivant(point point_actuel, planete p_etudie, planete soleil);
-trajectoire traj_planete(planete p, planete soleil, int t_max);
+trajectoire euler_traj_planete(planete p, planete soleil, int t_max);
+
+// Euler Asymétrique
+point point_suivant_euler_asym(point point_actuel, planete p_etudie, planete soleil);
+trajectoire euler_asym_traj_planete(planete p, planete soleil, int t_max);
+
+// Runge-Kutta
+point rk4_suivant(point point_actuel, planete p_etudie, planete soleil);
+trajectoire rk4_traj_planete(planete p, planete soleil, int t_max);
 
 // Calcul energie
 double p_energie(planete p, planete soleil, point pt);
@@ -60,7 +71,11 @@ double t_energie(planete p, planete soleil, point pt);
 void afficher_vect(vect v);
 
 // Export en json
-void export_json(trajectoire traj, char *nom_fichier);
+void export_json_euler(trajectoire traj, char *nom_fichier);
+void export_json_rk4(trajectoire traj, char *nom_fichier);
+void export_json_euler_asym(trajectoire traj, char *nom_fichier);
+void ecrire_points_json(FILE *fichier, trajectoire traj);
+
 
 // Misc
 double valeur_absolue(double x);

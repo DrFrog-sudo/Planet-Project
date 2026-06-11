@@ -103,7 +103,7 @@ point point_suivant(point point_actuel, planete p_etudie, planete soleil){
     return new_point;
 }
 
-trajectoire traj_planete(planete p, planete soleil, int t_max){
+trajectoire euler_traj_planete(planete p, planete soleil, int t_max){
     trajectoire traj;
     traj.planete=p;
     traj.nb_points=t_max/PasTemps;
@@ -141,14 +141,14 @@ void afficher_vect(vect v){
     printf("(%f, %f, %f)\n", v.x, v.y, v.z);
 }
 
-//Export en json
-void export_json(trajectoire traj, char *nom_fichier){
+//Export en json que pour euler
+void export_json_euler(trajectoire traj, char *nom_fichier){
     FILE *fichier = fopen(nom_fichier, "w");
     if (fichier == NULL){
         printf("Erreur lors de l'ouverture du fichier\n");
         return;
     }
-    fprintf(fichier,"{\"%s\" : [",traj.planete.nom);
+    fprintf(fichier,"{\"%s - Euler\" : [",traj.planete.nom);
     for(int i=0;i<traj.nb_points;i++){
         fprintf(fichier,"[");
         //Print position
@@ -172,6 +172,24 @@ void export_json(trajectoire traj, char *nom_fichier){
     fprintf(fichier,"]}");
     fclose(fichier);
 }
+
+// Fonction qui ecrit
+void ecrire_points_json(FILE *fichier, trajectoire traj){
+    for(int i=0; i<traj.nb_points; i++){
+        fprintf(fichier,"[");
+        fprintf(fichier,"[%f,%f,%f],",traj.tab_points[i].pos.x,traj.tab_points[i].pos.y,traj.tab_points[i].pos.z);
+        fprintf(fichier,"[%f,%f,%f],",traj.tab_points[i].vit.x,traj.tab_points[i].vit.y,traj.tab_points[i].vit.z);
+        fprintf(fichier,"%d",traj.tab_points[i].temps);
+        fprintf(fichier,",%f",traj.tab_points[i].ec);
+        fprintf(fichier,",%f",traj.tab_points[i].ep);
+        fprintf(fichier,",%f",traj.tab_points[i].et);
+        fprintf(fichier,"]\n");
+        if(i < traj.nb_points - 1) {
+            fprintf(fichier,",");
+        }
+    }
+}
+
 
 //Misc
 double valeur_absolue(double x){
