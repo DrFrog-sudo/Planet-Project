@@ -16,9 +16,12 @@ let offsetY = 0;
 
 let selectedPlanet = null;
 let energyHistory = [];
+let methodSelect;
+let selectedMethod = '';
 const MAX_GRAPH_POINTS = 200;
 
 function preload() {
+    // Load the single JSON file with all methods (do not split)
     data = loadJSON('terre.json');
 }
 
@@ -39,6 +42,34 @@ function setup() {
     sliderZoom.position(10, 90);
     sliderZoom.style('width', '240px');
     sliderZoomLabel = createP('').position(10, 115).style('color', 'white').style('font-size', '14px');
+
+    // Dropdown to choose calculation method (Euler, RK4, Euler asymétrique)
+    const methodLabel = createP('Méthode :').position(10, 120).style('color', 'white').style('font-size', '14px').style('margin', '0');
+    methodSelect = createSelect();
+    methodSelect.position(10, 145);
+    methodSelect.style('width', '240px');
+    methodSelect.changed(() => {
+        selectedMethod = methodSelect.value();
+        // Reset simulation state when switching method
+        frameIndex = 0;
+        trail = [];
+        energyHistory = [];
+        totalSteps = 0;
+        earthRawX = 0;
+        earthRawY = 0;
+    });
+    // Populate options now if data already loaded (preload ran before setup)
+    if (data) {
+        let methodKeys = Object.keys(data).filter(key => /euler|rk4/i.test(key));
+        if (methodKeys.length === 0) methodKeys = Object.keys(data);
+        for (let key of methodKeys) {
+            let label = key.replace(/Terre\s*-\s*/i, '');
+            label = label.replace(/Euler Asym/i, 'Euler asymétrique');
+            methodSelect.option(label, key);
+        }
+        selectedMethod = methodKeys.length ? methodKeys[0] : '';
+        methodSelect.selected(selectedMethod);
+    }
 }
 
 function formatSpeed(h) {
@@ -77,7 +108,16 @@ function drawSoleil() {
 }
 
 function drawTerre(zoom) {
-    const trajectory = data["Terre"];
+    let trajectory;
+
+    if (selectedMethod && data[selectedMethod]) {
+        trajectory = data[selectedMethod];
+    } else if (data["Terre"]) {
+        trajectory = data["Terre"];
+    } else {
+        trajectory = data[Object.keys(data)[0]];
+    }
+
     if (!trajectory || trajectory.length === 0) return;
 
     const sampleInterval = trajectory.length > 1
@@ -111,12 +151,12 @@ function drawTerre(zoom) {
     let currentEp = abs(trajectory[frameIndex][4]);
     let currentEm = currentEc + currentEp;
 
-    // On récupère les valeurs au tout premier point (t=0)
+    // On récupère les valeurs au tout premier point , quand t=0
     let initEc = trajectory[0][3];
     let initEp = abs(trajectory[0][4]);
     let initEm = initEc + initEp;
 
-    // On soustrait la valeur initiale pour n'afficher que la petite variation (le "delta")
+    // On soustrait la valeur initiale pour n'afficher que le delta
     let deltaEc = currentEc - initEc;
     let deltaEp = currentEp - initEp;
     let deltaEm = currentEm - initEm;
