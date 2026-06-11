@@ -33,7 +33,7 @@ function setup() {
     sliderSpeed.position(10, 10);
     sliderSpeed.style('width', '240px');
     sliderSpeedLabel = createP('').position(10, 35).style('color', 'white').style('font-size', '14px');
-    timeLabel        = createP('').position(10, 60).style('color', 'white').style('font-size', '14px');
+    timeLabel = createP('').position(10, 60).style('color', 'white').style('font-size', '14px');
 
     sliderZoom = createSlider(5, 50, 50, 1);
     sliderZoom.position(10, 90);
@@ -42,18 +42,18 @@ function setup() {
 }
 
 function formatSpeed(h) {
-    if (h < 24)  return `${h} hour${h === 1 ? '' : 's'}`;
+    if (h < 24) return `${h} hour${h === 1 ? '' : 's'}`;
     if (h < 168) return `${(h / 24).toFixed(1)} days`;
     if (h < 720) return `${(h / 168).toFixed(1)} weeks`;
-                 return `${(h / 720).toFixed(1)} months`;
+    return `${(h / 720).toFixed(1)} months`;
 }
 
 function formatElapsed(h) {
-    if (h < 24)   return `${floor(h)}h`;
-    if (h < 168)  return `${floor(h / 24)}d ${floor(h % 24)}h`;
-    if (h < 720)  return `${floor(h / 168)}w ${floor(h % 168 / 24)}d`;
+    if (h < 24) return `${floor(h)}h`;
+    if (h < 168) return `${floor(h / 24)}d ${floor(h % 24)}h`;
+    if (h < 720) return `${floor(h / 168)}w ${floor(h % 168 / 24)}d`;
     if (h < 8760) return `${floor(h / 720)}mo ${floor(h % 720 / 168)}w`;
-                  return `${floor(h / 8760)}y ${floor(h % 8760 / 720)}mo`;
+    return `${floor(h / 8760)}y ${floor(h % 8760 / 720)}mo`;
 }
 
 function drawStars() {
@@ -67,13 +67,13 @@ function drawStars() {
 function drawSoleil() {
     noStroke();
     fill(255, 220, 0, 40); circle(W / 2 + offsetX, H / 2 + offsetY, 80 * sliderZoom.value() / 10);
-    fill(255, 180, 0);     circle(W / 2 + offsetX, H / 2 + offsetY, 50 * sliderZoom.value() / 10);
-    fill(255, 150, 0);     circle(W / 2 + offsetX, H / 2 + offsetY, 30 * sliderZoom.value() / 10);
-    fill(255, 120, 0);     circle(W / 2 + offsetX, H / 2 + offsetY, 20 * sliderZoom.value() / 10);
-    fill(255, 100, 0);     circle(W / 2 + offsetX, H / 2 + offsetY, 10 * sliderZoom.value() / 10);
-    fill(255, 80, 0);      circle(W / 2 + offsetX, H / 2 + offsetY, 5 * sliderZoom.value() / 10);
-    fill(255, 60, 0);      circle(W / 2 + offsetX, H / 2 + offsetY, 3 * sliderZoom.value() / 10);
-    fill(255, 40, 0);      circle(W / 2 + offsetX, H / 2 + offsetY, 2 * sliderZoom.value() / 10);
+    fill(255, 180, 0); circle(W / 2 + offsetX, H / 2 + offsetY, 50 * sliderZoom.value() / 10);
+    fill(255, 150, 0); circle(W / 2 + offsetX, H / 2 + offsetY, 30 * sliderZoom.value() / 10);
+    fill(255, 120, 0); circle(W / 2 + offsetX, H / 2 + offsetY, 20 * sliderZoom.value() / 10);
+    fill(255, 100, 0); circle(W / 2 + offsetX, H / 2 + offsetY, 10 * sliderZoom.value() / 10);
+    fill(255, 80, 0); circle(W / 2 + offsetX, H / 2 + offsetY, 5 * sliderZoom.value() / 10);
+    fill(255, 60, 0); circle(W / 2 + offsetX, H / 2 + offsetY, 3 * sliderZoom.value() / 10);
+    fill(255, 40, 0); circle(W / 2 + offsetX, H / 2 + offsetY, 2 * sliderZoom.value() / 10);
 }
 
 function drawTerre(zoom) {
@@ -85,7 +85,7 @@ function drawTerre(zoom) {
         : 60;
 
     const speedFactor = sliderSpeed.value();
-    const advanceBy   = Math.max(1, Math.round((speedFactor * 3600) / sampleInterval));
+    const advanceBy = Math.max(1, Math.round((speedFactor * 3600) / sampleInterval));
 
     sliderSpeedLabel.html(`Speed: ${formatSpeed(speedFactor)} per frame`);
 
@@ -208,7 +208,7 @@ function drawGraphs() {
         noStroke();
         fill(240);
         textSize(12);
-        textStyle(BOLD);
+        fontStyle(BOLD);
         textAlign(LEFT, TOP);
         text(titles[i], xStart + 15, yStart + 12);
 
@@ -225,7 +225,7 @@ function drawGraphs() {
             }
         }
         endShape();
-        textStyle(NORMAL);
+        fontStyle(NORMAL);
     }
 }
 
