@@ -2,7 +2,6 @@ function preload() {
     data = loadJSON('terre.json');
     imgSoleil = loadImage('sunTexture.jpg');
     imgTerre = loadImage('terreTexture.jpg');
-    imgMercure = loadImage('mercury.jpg');
     imgVenus = loadImage('venus.jpg');
     imgMars = loadImage('mars.jpg');
 }
@@ -91,13 +90,11 @@ function setup() {
         selectedMethod = methodSelect.value();
         frameIndex = 0;
         trailEarth = [];
-        trailMercury = [];
         trailVenus = [];
         trailMars = [];
         energyHistory = [];
         totalSteps = 0;
         earthRawX = 0; earthRawY = 0;
-        mercuryRawX = 0; mercuryRawY = 0;
         venusRawX = 0; venusRawY = 0;
         marsRawX = 0; marsRawY = 0;
     });
@@ -139,7 +136,6 @@ function mousePressed() {
 
     let planetsToCheck = [
         { name: 'Terre', x: earthRawX, y: earthRawY, r: 14 },
-        { name: 'Mercure', x: mercuryRawX, y: mercuryRawY, r: 8 },
         { name: 'Venus', x: venusRawX, y: venusRawY, r: 13 },
         { name: 'Mars', x: marsRawX, y: marsRawY, r: 10 }
     ];

@@ -46,11 +46,9 @@ function updateAndDrawPlanets(zoom) {
 
     let trajectoryEarth = data[baseKey];
     
-    let keyMercury = baseKey.replace(/Terre/i, 'Mercure');
     let keyVenus = baseKey.replace(/Terre/i, 'Venus');
     let keyMars = baseKey.replace(/Terre/i, 'Mars');
 
-    let trajectoryMercury = data[keyMercury] || trajectoryEarth;
     let trajectoryVenus = data[keyVenus] || trajectoryEarth;
     let trajectoryMars = data[keyMars] || trajectoryEarth;
 
@@ -70,10 +68,6 @@ function updateAndDrawPlanets(zoom) {
         trailEarth.push({ x: earthRawX, y: earthRawY });
         while (trailEarth.length > maxTrailPoints) trailEarth.shift();
     }
-    if (mercuryRawX !== 0 || mercuryRawY !== 0) {
-        trailMercury.push({ x: mercuryRawX, y: mercuryRawY });
-        while (trailMercury.length > maxTrailPoints) trailMercury.shift();
-    }
     if (venusRawX !== 0 || venusRawY !== 0) {
         trailVenus.push({ x: venusRawX, y: venusRawY });
         while (trailVenus.length > maxTrailPoints) trailVenus.shift();
@@ -90,13 +84,6 @@ function updateAndDrawPlanets(zoom) {
     earthRawX = trajectoryEarth[frameIndex][0][0] / 500_000_000;
     earthRawY = trajectoryEarth[frameIndex][0][1] / 500_000_000;
 
-    if (data[keyMercury] && data[keyMercury][frameIndex]) {
-        mercuryRawX = data[keyMercury][frameIndex][0][0] / 500_000_000;
-        mercuryRawY = data[keyMercury][frameIndex][0][1] / 500_000_000;
-    } else {
-        mercuryRawX = earthRawX * 0.4;
-        mercuryRawY = earthRawY * 0.4;
-    }
 
     if (data[keyVenus] && data[keyVenus][frameIndex]) {
         venusRawX = data[keyVenus][frameIndex][0][0] / 500_000_000;
@@ -115,7 +102,6 @@ function updateAndDrawPlanets(zoom) {
     }
 
     let activeTrajectory = trajectoryEarth;
-    if (selectedPlanet === 'Mercure') activeTrajectory = trajectoryMercury;
     if (selectedPlanet === 'Venus') activeTrajectory = trajectoryVenus;
     if (selectedPlanet === 'Mars') activeTrajectory = trajectoryMars;
 
@@ -131,7 +117,6 @@ function updateAndDrawPlanets(zoom) {
     }
 
     drawPlanetWithTrail(earthRawX, earthRawY, 14, imgTerre, trailEarth, [0, 140, 255], 0.015, zoom);
-    drawPlanetWithTrail(mercuryRawX, mercuryRawY, 8, imgMercure, trailMercury, [150, 150, 150], 0.01, zoom);
     drawPlanetWithTrail(venusRawX, venusRawY, 13, imgVenus, trailVenus, [220, 180, 120], 0.005, zoom);
     drawPlanetWithTrail(marsRawX, marsRawY, 10, imgMars, trailMars, [255, 100, 50], 0.012, zoom);
 
