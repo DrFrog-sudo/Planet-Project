@@ -159,12 +159,12 @@ function drawGraphs() {
     camera(0, 0, (height/2.0) / tan(PI*30.0 / 180.0), 0, 0, 0, 0, 1, 0);
     translate(-W / 2, -H / 2, 0); 
 
-    let gW = 240;
-    let gH = 110;
-    let padding = 20;
-    let xStart = W - gW - padding; 
-    let totalHeight = 3 * gH + 2 * padding;
-    let yStart = (H - totalHeight) / 2;
+    let gW = 220;
+    let gH = 90;
+    let yStart = H - gH - 30; 
+    let totalWidth = 3 * gW + 40; 
+    let startX = (W - totalWidth) / 2;
+    let xStarts = [startX, startX + gW + 20, startX + 2 * (gW + 20)];
     
     let keys = ['dEc', 'dEp', 'dEm'];
     let titles = [`ΔEc (${selectedPlanet})`, `ΔEp (${selectedPlanet})`, `ΔEm (${selectedPlanet})`]; 
@@ -190,33 +190,46 @@ function drawGraphs() {
     }
 
     for (let i = 0; i < 3; i++) {
-        let currentY = yStart + i * (gH + padding);
+        let currentX = xStarts[i];
+        let currentY = yStart;
         let key = keys[i];
 
         fill(15, 20, 35, 230);
         stroke(0, 120, 255, 100);
         strokeWeight(1.5);
-        rect(xStart, currentY, gW, gH, 12);
+        rect(currentX, currentY, gW, gH, 12);
 
         let yZero = map(0, globalMin, globalMax, currentY + gH - 15, currentY + 30);
         if (isFinite(yZero) && yZero > currentY + 30 && yZero < currentY + gH - 15) {
             stroke(255, 255, 255, 50);
             strokeWeight(1);
-            line(xStart + 15, yZero, xStart + gW - 15, yZero);
+            line(currentX + 15, yZero, currentX + gW - 15, yZero);
         }
 
         noStroke();
         fill(240);
         textSize(11);
         textAlign(LEFT, TOP);
-        text(titles[i], xStart + 15, currentY + 10);
+        text(titles[i], currentX + 15, currentY + 10);
+        
+        // Labels Max / Min (like in the previous horizontal layout)
+        fill(255, 255, 255, 120);
+        textSize(9);
+        textStyle(NORMAL);
+        textAlign(RIGHT, TOP);
+        let maxStr = globalMax > 0 ? "+" + globalMax.toExponential(1) : globalMax.toExponential(1);
+        text(maxStr, currentX + gW - 12, currentY + 32);
+        
+        textAlign(RIGHT, BOTTOM);
+        let minStr = globalMin > 0 ? "+" + globalMin.toExponential(1) : globalMin.toExponential(1);
+        text(minStr, currentX + gW - 12, currentY + gH - 17);
 
         noFill();
         stroke(colors[i][0], colors[i][1], colors[i][2]);
         strokeWeight(2);
         beginShape();
         for (let j = 0; j < energyHistory.length; j++) {
-            let vx = map(j, 0, energyHistory.length - 1, xStart + 15, xStart + gW - 15);
+            let vx = map(j, 0, energyHistory.length - 1, currentX + 15, currentX + gW - 15);
             let vy = map(energyHistory[j][key], globalMin, globalMax, currentY + gH - 15, currentY + 30);
             if (isFinite(vx) && isFinite(vy)) {
                 vertex(vx, vy, 0);

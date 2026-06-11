@@ -1,0 +1,4 @@
+*.o
+*.exe
+*.json
+!*.vscode/*.json

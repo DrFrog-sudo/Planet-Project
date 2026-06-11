@@ -61,28 +61,120 @@ void export_json_rk4(trajectoire traj, char *nom_fichier){
         return;
     }
     fprintf(fichier,"{\" %s - RK4\" : [",traj.planete.nom);
-    for(int i=0;i<traj.nb_points;i++){
-        fprintf(fichier,"[");
-        //Print position
-        fprintf(fichier,"[%f,%f,%f],",traj.tab_points[i].pos.x,traj.tab_points[i].pos.y,traj.tab_points[i].pos.z);
-        //Print vitesse
-        fprintf(fichier,"[%f,%f,%f],",traj.tab_points[i].vit.x,traj.tab_points[i].vit.y,traj.tab_points[i].vit.z);
-        //Print temps
-        fprintf(fichier,"%d",traj.tab_points[i].temps);
-        //Print energie cinetique
-        fprintf(fichier,",%f",traj.tab_points[i].ec);
-        //Print energie potentielle
-        fprintf(fichier,",%f",traj.tab_points[i].ep);
-        //Print energie totale
-        fprintf(fichier,",%f",traj.tab_points[i].et);
-        fprintf(fichier,"]\n");
-        if(i < traj.nb_points - 1) {
-            fprintf(fichier,",");
-        }
-    }
-    
+    ecrire_points_json(fichier, traj);
     fprintf(fichier,"]}");
     fclose(fichier);
 }
 
+// ------ N-Corps ------
+
+traj_systeme_solaire rk4_traj_systeme_solaire(planete systeme_solaire[4], int nb_planetes, int t_max) {
+    traj_systeme_solaire traj;
+    traj.nb_points = t_max / PasTemps;
+    
+    for(int i=0;i<nb_planetes;i++){
+        traj.systeme_solaire[i]=systeme_solaire[i];
+    }
+    
+    traj.tab_points = malloc(nb_planetes * sizeof(point*));
+    for(int i=0;i<nb_planetes;i++){
+        traj.tab_points[i] = malloc(traj.nb_points * sizeof(point));
+    }
+    
+    if (traj.nb_points > 0) {
+        for(int i=0;i<nb_planetes;i++){
+            traj.tab_points[i][0] = systeme_solaire[i].pos_vit;
+        }
+        
+        // Tableaux pour stocker les k
+        vect k1r[4], k1v[4];
+        vect k2r[4], k2v[4];
+        vect k3r[4], k3v[4];
+        vect k4r[4], k4v[4];
+        planete sys_temp[4];
+        
+        for (int i = 1; i < traj.nb_points; i++) {
+            
+            // --- K1 ---
+            for(int j=0; j<nb_planetes; j++){
+                k1r[j] = mul_scalaire(traj.systeme_solaire[j].pos_vit.vit, PasTemps);
+                k1v[j] = mul_scalaire(acceleration_n_corps(j, traj.systeme_solaire, nb_planetes), PasTemps);
+            }
+            
+            // --- K2 ---
+            for(int j=0; j<nb_planetes; j++){
+                sys_temp[j] = traj.systeme_solaire[j];
+                sys_temp[j].pos_vit.pos = add_vect(traj.systeme_solaire[j].pos_vit.pos, div_scalaire(k1r[j], 2));
+                sys_temp[j].pos_vit.vit = add_vect(traj.systeme_solaire[j].pos_vit.vit, div_scalaire(k1v[j], 2));
+            }
+            for(int j=0; j<nb_planetes; j++){
+                k2r[j] = mul_scalaire(sys_temp[j].pos_vit.vit, PasTemps);
+                k2v[j] = mul_scalaire(acceleration_n_corps(j, sys_temp, nb_planetes), PasTemps);
+            }
+            
+            // --- K3 --- 
+            for(int j=0; j<nb_planetes; j++){
+                sys_temp[j] = traj.systeme_solaire[j];
+                sys_temp[j].pos_vit.pos = add_vect(traj.systeme_solaire[j].pos_vit.pos, div_scalaire(k2r[j], 2));
+                sys_temp[j].pos_vit.vit = add_vect(traj.systeme_solaire[j].pos_vit.vit, div_scalaire(k2v[j], 2));
+            }
+            for(int j=0; j<nb_planetes; j++){
+                k3r[j] = mul_scalaire(sys_temp[j].pos_vit.vit, PasTemps);
+                k3v[j] = mul_scalaire(acceleration_n_corps(j, sys_temp, nb_planetes), PasTemps);
+            }
+            
+            // --- K4 ---
+            for(int j=0; j<nb_planetes; j++){
+                sys_temp[j] = traj.systeme_solaire[j];
+                sys_temp[j].pos_vit.pos = add_vect(traj.systeme_solaire[j].pos_vit.pos, k3r[j]);
+                sys_temp[j].pos_vit.vit = add_vect(traj.systeme_solaire[j].pos_vit.vit, k3v[j]);
+            }
+            for(int j=0; j<nb_planetes; j++){
+                k4r[j] = mul_scalaire(sys_temp[j].pos_vit.vit, PasTemps);
+                k4v[j] = mul_scalaire(acceleration_n_corps(j, sys_temp, nb_planetes), PasTemps);
+            }
+            
+            // --- Final Update ---
+            for(int j=0; j<nb_planetes; j++){
+                vect pos_add = add_vect(k1r[j], add_vect(mul_scalaire(k2r[j], 2), add_vect(mul_scalaire(k3r[j], 2), k4r[j])));
+                vect vit_add = add_vect(k1v[j], add_vect(mul_scalaire(k2v[j], 2), add_vect(mul_scalaire(k3v[j], 2), k4v[j])));
+                
+                point new_point;
+                new_point.pos = add_vect(traj.systeme_solaire[j].pos_vit.pos, div_scalaire(pos_add, 6));
+                new_point.vit = add_vect(traj.systeme_solaire[j].pos_vit.vit, div_scalaire(vit_add, 6));
+                new_point.temps = traj.systeme_solaire[j].pos_vit.temps + PasTemps;
+                
+                // Mettre à jour dans le tableau
+                traj.tab_points[j][i] = new_point;
+            }
+            
+            // Mettre à jour systeme_solaire et calculer les energies avec les nouvelles positions
+            for(int j=0; j<nb_planetes; j++){
+                traj.systeme_solaire[j].pos_vit = traj.tab_points[j][i];
+            }
+            for(int j=0; j<nb_planetes; j++){
+                traj.tab_points[j][i].ep = p_energie_n_corps(j, traj.systeme_solaire, nb_planetes);
+                traj.tab_points[j][i].ec = c_energie_n_corps(j, traj.systeme_solaire, nb_planetes);
+                traj.tab_points[j][i].et = t_energie_n_corps(j, traj.systeme_solaire, nb_planetes);
+                // Mise à jour de l'énergie dans sys
+                traj.systeme_solaire[j].pos_vit.ep = traj.tab_points[j][i].ep;
+                traj.systeme_solaire[j].pos_vit.ec = traj.tab_points[j][i].ec;
+                traj.systeme_solaire[j].pos_vit.et = traj.tab_points[j][i].et;
+            }
+        }
+    }
+    return traj;
+}
+
+void export_json_rk4_systeme_solaire(traj_systeme_solaire traj, char *nom_fichier){
+    FILE *fichier = fopen(nom_fichier, "w");
+    if (fichier == NULL){
+        printf("Erreur lors de l'ouverture du fichier\n");
+        return;
+    }
+    fprintf(fichier, "{\n");
+    ecrire_systeme_json(fichier, traj, "RK4", 1);
+    fprintf(fichier, "}\n");
+    fclose(fichier);
+}
 
