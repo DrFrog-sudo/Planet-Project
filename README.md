@@ -1,3 +1,9 @@
 # Planet-Project
 
-Project that combines web and C to modelize planet orbits
+C with the math part
+
+HTML to initialize the page
+
+CSS negligeable
+
+JS with a test for visuals
