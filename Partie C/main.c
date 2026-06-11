@@ -17,8 +17,56 @@ int main(){
     terre.pos_vit.ec=c_energie(terre,terre.pos_vit);
     terre.pos_vit.et=t_energie(terre,soleil,terre.pos_vit);
     strcpy(terre.nom,"Terre");
-    trajectoire traj_terre=traj_planete(terre,soleil,365*24*3600);
-    printf("Traj calcule");
-    export_json(traj_terre,"terre.json");
+    int traj_to_do;
+    printf("Que voulez-vous faire?\n");
+    printf("1. Calculer la trajectoire d'Euler\n");
+    printf("2. Calculer la trajectoire de Runge-Kutta\n");
+    printf("3. Calculer la trajectoire d'Euler Asymétrique\n");
+    printf("4. Calculer les 3 trajectoires\n");
+    scanf("%d",&traj_to_do);
+    if(traj_to_do==1){
+        trajectoire traj_terre_euler = euler_traj_planete(terre, soleil, 365*24*3600*nb_annee);
+        export_json_euler(traj_terre_euler, "terre.json");
+        printf("Traj euler calcule\n");
+    }
+    if(traj_to_do==2){
+    trajectoire traj_terre_rk4 = rk4_traj_planete(terre, soleil, 365*24*3600*nb_annee);
+    export_json_rk4(traj_terre_rk4, "terre.json");
+    printf("Traj rk4 calcule\n");
+    }
+    if(traj_to_do==3){
+        trajectoire traj_terre_euler_asym = euler_asym_traj_planete(terre, soleil, 365*24*3600*nb_annee);
+        export_json_euler_asym(traj_terre_euler_asym, "terre.json");
+        printf("Traj euler asym calcule\n");
+    }
+    if(traj_to_do==4){
+        trajectoire traj_terre_euler = euler_traj_planete(terre, soleil, 365*24*3600*nb_annee);
+        printf("Traj euler calcule\n");
+        trajectoire traj_terre_rk4 = rk4_traj_planete(terre, soleil, 365*24*3600*nb_annee);
+        printf("Traj rk4 calcule\n");
+        trajectoire traj_terre_euler_asym = euler_asym_traj_planete(terre, soleil, 365*24*3600*nb_annee);
+        printf("Traj euler asym calcule\n");
+        FILE *fichier = fopen("terre.json", "w");
+        if (fichier != NULL) {
+            fprintf(fichier, "{");
+            
+            
+            fprintf(fichier, "\"%s - Euler\" : [", terre.nom);
+            ecrire_points_json(fichier, traj_terre_euler);
+            fprintf(fichier, "],\n");
+            
+            fprintf(fichier, "\"%s - RK4\" : [", terre.nom);
+            ecrire_points_json(fichier, traj_terre_rk4);
+            fprintf(fichier, "],\n");
+            
+            fprintf(fichier, "\"%s - Euler Asym\" : [", terre.nom);
+            ecrire_points_json(fichier, traj_terre_euler_asym);
+            fprintf(fichier, "]");
+            fprintf(fichier, "}");
+            fclose(fichier);
+            printf("Euler puis RK4 puis Euler Asym ecrit dans terre.json\n");
+        }
+
+    }
     return 0;
 }
