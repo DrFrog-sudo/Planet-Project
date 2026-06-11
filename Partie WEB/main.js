@@ -101,6 +101,8 @@ function drawTerre(zoom) {
     const prevFrameIndex = frameIndex;
     frameIndex = (frameIndex + advanceBy) % trajectory.length;
 
+    if (!trajectory[frameIndex] || !trajectory[0]) return;
+
     const [px, py] = trajectory[frameIndex][0];
     earthRawX = px / 500_000_000;
     earthRawY = py / 500_000_000;
@@ -109,13 +111,15 @@ function drawTerre(zoom) {
     let currentEp = abs(trajectory[frameIndex][4]);
     let currentEm = currentEc + currentEp;
 
-    let prevEc = trajectory[prevFrameIndex][3];
-    let prevEp = abs(trajectory[prevFrameIndex][4]);
-    let prevEm = prevEc + prevEp;
+    // On récupère les valeurs au tout premier point (t=0)
+    let initEc = trajectory[0][3];
+    let initEp = abs(trajectory[0][4]);
+    let initEm = initEc + initEp;
 
-    let deltaEc = currentEc - prevEc;
-    let deltaEp = currentEp - prevEp;
-    let deltaEm = currentEm - prevEm;
+    // On soustrait la valeur initiale pour n'afficher que la petite variation (le "delta")
+    let deltaEc = currentEc - initEc;
+    let deltaEp = currentEp - initEp;
+    let deltaEm = currentEm - initEm;
 
     energyHistory.push({ dEc: deltaEc, dEp: deltaEp, dEm: deltaEm });
     if (energyHistory.length > MAX_GRAPH_POINTS) {
@@ -195,7 +199,7 @@ function drawGraphs() {
         rect(xStart, yStart, gW, gH, 12);
 
         let yZero = map(0, globalMin, globalMax, yStart + gH - 20, yStart + 40);
-        if (yZero > yStart + 40 && yZero < yStart + gH - 20) {
+        if (isFinite(yZero) && yZero > yStart + 40 && yZero < yStart + gH - 20) {
             stroke(255, 255, 255, 40);
             strokeWeight(1);
             line(xStart + 15, yZero, xStart + gW - 15, yZero);
@@ -204,7 +208,7 @@ function drawGraphs() {
         noStroke();
         fill(240);
         textSize(12);
-        fontStyle(BOLD);
+        textStyle(BOLD);
         textAlign(LEFT, TOP);
         text(titles[i], xStart + 15, yStart + 12);
 
@@ -216,10 +220,12 @@ function drawGraphs() {
         for (let j = 0; j < energyHistory.length; j++) {
             let vx = map(j, 0, energyHistory.length - 1, xStart + 15, xStart + gW - 15);
             let vy = map(energyHistory[j][key], globalMin, globalMax, yStart + gH - 20, yStart + 40);
-            vertex(vx, vy);
+            if (isFinite(vx) && isFinite(vy)) {
+                vertex(vx, vy);
+            }
         }
         endShape();
-        fontStyle(NORMAL);
+        textStyle(NORMAL);
     }
 }
 
