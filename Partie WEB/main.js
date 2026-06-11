@@ -1,10 +1,19 @@
-let windowWidth = 1300;
-let windowHeight = 850;
+let windowWidth = 1200;
+let windowHeight = 800;
 let stars = [];
+let data;
+let trajectoire;
+let tPoint;
+let position;
+let earthX;
+let earthY;
+let frameIndex = 0;
+let trail = [];
+let TRAIL_LENGTH = 50000;
+let slider;
 
 function setup() {
     createCanvas(windowWidth, windowHeight);
-
     for (let i = 0; i < 300; i++) {
         stars.push({
             x: random(width),
@@ -13,60 +22,59 @@ function setup() {
             brightness: random(150, 255)
         });
     }
+    slider = createSlider(1, 100, 1);
+    slider.position(10, 10);
+}
+
+function preload() {
+    data = loadJSON('mercury.json');
 }
 
 function draw() {
     background(0);
 
-    // Étoiles
-    noStroke();
-    fill(255);
+    trajectoire = data["mercury-euler"];
 
+    noStroke();
     for (let star of stars) {
-    fill(star.brightness);
-    circle(star.x, star.y, star.size);
+        fill(star.brightness);
+        circle(star.x, star.y, star.size);
     }
-
-    // Soleil
+    //SOLEIL
     noStroke();
-
-    // Halo lumineux
     fill(255, 220, 0, 40);
     circle(width / 2, height / 2, 80);
-
-    // Corps du Soleil
     fill(255, 180, 0);
     circle(width / 2, height / 2, 50);
 
-    // Orbite de la Terre
-    noFill();
-    stroke(60);
-    strokeWeight(1);
-    circle(width / 2, height / 2, 300);
+    //TERRE
+    if (trajectoire && trajectoire.length > 0) {
+        tPoint = trajectoire[frameIndex];
+        position = tPoint[0];
 
-    // Terre
-    let earthX = width / 2 + 150 * cos(frameCount * 0.01);
-    let earthY = height / 2 + 150 * sin(frameCount * 0.01);
+        trail.push({ x: earthX, y: earthY });
+        if (trail.length > TRAIL_LENGTH) {
+            trail.shift();
+        }
 
-    // Halo bleu
-    noStroke();
-    fill(100, 150, 255, 40);
-    circle(earthX, earthY, 40);
+        earthX = position[0] / 500000000 + width / 2;
+        earthY = position[1] / 500000000 + height / 2;
 
-    // Corps de la Terre
-    fill(30, 120, 255);
-    stroke(180, 220, 255);
-    strokeWeight(2);
-    circle(earthX, earthY, 30);
+        noStroke();
+        for (let i = 0; i < trail.length; i++) {
+            let alpha = map(i, 0, trail.length - 1, 0, 255);
+            let size = map(i, 0, trail.length - 1, 2, 10);
+            fill(0, 100, 255, alpha);
+            circle(trail[i].x, trail[i].y, size);
+        }
 
-    // Continents
-    noStroke();
-    fill(50, 180, 50);
-    circle(earthX - 5, earthY - 4, 8);
-    circle(earthX + 4, earthY + 2, 6);
-    circle(earthX - 2, earthY + 7, 5);
+        fill(0, 100, 255);
+        circle(earthX, earthY, 20);
 
-    // Reflet lumineux
-    fill(255, 255, 255, 120);
-    circle(earthX - 6, earthY - 6, 7);
+        frameIndex++;
+
+        if (frameIndex >= trajectoire.length) {
+            frameIndex = 0;
+        }
+    }
 }
