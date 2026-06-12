@@ -191,7 +191,15 @@ void export_json_euler(trajectoire traj, char *nom_fichier){
         return;
     }
     fprintf(fichier,"{\"%s - Euler\" : [",traj.planete.nom);
+    int first = 1;
     for(int i=0;i<traj.nb_points;i++){
+        if (i % 6 != 0 && i != traj.nb_points - 1) continue;
+        
+        if (!first) {
+            fprintf(fichier,",");
+        }
+        first = 0;
+        
         fprintf(fichier,"[");
         //Print position
         fprintf(fichier,"[%e,%e,%e],",traj.tab_points[i].pos.x,traj.tab_points[i].pos.y,traj.tab_points[i].pos.z);
@@ -206,9 +214,6 @@ void export_json_euler(trajectoire traj, char *nom_fichier){
         //Print energie totale
         fprintf(fichier,",%e",traj.tab_points[i].et);
         fprintf(fichier,"]\n");
-        if(i < traj.nb_points - 1) {
-            fprintf(fichier,",");
-        }
     }
     
     fprintf(fichier,"]}");
@@ -217,7 +222,15 @@ void export_json_euler(trajectoire traj, char *nom_fichier){
 
 // Fonction qui ecrit
 void ecrire_points_json(FILE *fichier, trajectoire traj){
+    int first = 1;
     for(int i=0; i<traj.nb_points; i++){
+        if (i % 6 != 0 && i != traj.nb_points - 1) continue;
+        
+        if (!first) {
+            fprintf(fichier,",");
+        }
+        first = 0;
+        
         fprintf(fichier,"[");
         fprintf(fichier,"[%e,%e,%e],",traj.tab_points[i].pos.x,traj.tab_points[i].pos.y,traj.tab_points[i].pos.z);
         fprintf(fichier,"[%e,%e,%e],",traj.tab_points[i].vit.x,traj.tab_points[i].vit.y,traj.tab_points[i].vit.z);
@@ -226,9 +239,6 @@ void ecrire_points_json(FILE *fichier, trajectoire traj){
         fprintf(fichier,",%e",traj.tab_points[i].ep);
         fprintf(fichier,",%e",traj.tab_points[i].et);
         fprintf(fichier,"]\n");
-        if(i < traj.nb_points - 1) {
-            fprintf(fichier,",");
-        }
         afficher_barre_chargement(i+1, traj.nb_points, "Export JSON");
     }
 }
@@ -250,7 +260,19 @@ void ecrire_systeme_json(FILE *fichier, traj_systeme_solaire traj, char *methode
     for(int p=0; p<traj.nb_planetes; p++){
         if(traj.systeme_solaire[p].masse > 0) {
             fprintf(fichier,"\"%s - %s\" : [\n", traj.systeme_solaire[p].nom, methode);
+            int first = 1;
             for(int i=0; i<traj.nb_points; i++){
+                current_point++;
+                if (i % 6 != 0 && i != traj.nb_points - 1) {
+                    afficher_barre_chargement(current_point, total_points, prefix_str);
+                    continue;
+                }
+                
+                if (!first) {
+                    fprintf(fichier,",");
+                }
+                first = 0;
+                
                 fprintf(fichier,"[");
                 fprintf(fichier,"[%e,%e,%e],",traj.tab_points[p][i].pos.x,traj.tab_points[p][i].pos.y,traj.tab_points[p][i].pos.z);
                 fprintf(fichier,"[%e,%e,%e],",traj.tab_points[p][i].vit.x,traj.tab_points[p][i].vit.y,traj.tab_points[p][i].vit.z);
@@ -259,10 +281,7 @@ void ecrire_systeme_json(FILE *fichier, traj_systeme_solaire traj, char *methode
                 fprintf(fichier,",%e",traj.tab_points[p][i].ep);
                 fprintf(fichier,",%e",traj.tab_points[p][i].et);
                 fprintf(fichier,"]\n");
-                if(i < traj.nb_points - 1) {
-                    fprintf(fichier,",");
-                }
-                current_point++;
+                
                 afficher_barre_chargement(current_point, total_points, prefix_str);
             }
             fprintf(fichier,"]\n");
