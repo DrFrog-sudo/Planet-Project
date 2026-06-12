@@ -409,9 +409,16 @@ function updateAndDrawPlanets(zoom) {
         drawPlanet(halleyRawX * zoom, halleyRawY * zoom, halleyRawZ * zoom, 2 * SIZE_FACTOR * zoom, imgHalley, trailHalley, zoom);
     }
     if (pMoon) {
-        moonRawX = (pMoon[0][0] / AU_METERS) * DISPLAY_SCALE;
-        moonRawY = (pMoon[0][1] / AU_METERS) * DISPLAY_SCALE;
-        moonRawZ = (pMoon[0][2] / AU_METERS) * DISPLAY_SCALE;
+        let mx = (pMoon[0][0] / AU_METERS) * DISPLAY_SCALE;
+        let my = (pMoon[0][1] / AU_METERS) * DISPLAY_SCALE;
+        let mz = (pMoon[0][2] / AU_METERS) * DISPLAY_SCALE;
+        
+        // Exagération artificielle de la distance pour éviter que la lune soit cachée DANS la Terre
+        let factor = 60; 
+        moonRawX = earthRawX + (mx - earthRawX) * factor;
+        moonRawY = earthRawY + (my - earthRawY) * factor;
+        moonRawZ = earthRawZ + (mz - earthRawZ) * factor;
+
         trailMoon.push({ x: moonRawX, y: moonRawY, z: moonRawZ });
         if (trailMoon.length > TRAIL_LENGTH) trailMoon.shift();
         drawPlanet(moonRawX * zoom, moonRawY * zoom, moonRawZ * zoom, 4 * SIZE_FACTOR * zoom, imgMoon, trailMoon, zoom);
