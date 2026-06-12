@@ -1,8 +1,9 @@
 function preload() {
-    data = loadJSON('terre.json');
+    data = loadJSON('systeme_solaire.json');
     imgSoleil = loadImage('sunTexture.jpg');
-    imgTerre = loadImage('terreTexture.jpg');
+    imgMercure = loadImage('mercury.jpg');
     imgVenus = loadImage('venus.jpg');
+    imgTerre = loadImage('terreTexture.jpg');
     imgMars = loadImage('mars.jpg');
 }
 
@@ -28,89 +29,69 @@ function setup() {
     panel.style('border-radius', '15px');
     panel.style('backdrop-filter', 'blur(10px)');
     panel.style('box-shadow', '0 0 20px rgba(77,166,255,0.3)');
+    panel.style('padding', '15px');
+    panel.style('color', '#fff');
+    panel.style('font-family', 'sans-serif');
 
-    sliderSpeed = createSlider(1, 961, 1, 24);
-    sliderSpeed.parent(panel);
-    sliderSpeed.position(15, 15);
-    sliderSpeed.style('width', '250px');
-    sliderSpeed.style('accent-color', '#4da6ff');
+    let title = createDiv('Système Solaire N-Corps');
+    title.parent(panel);
+    title.style('font-weight', 'bold');
+    title.style('font-size', '16px');
+    title.style('margin-bottom', '15px');
+    title.style('color', '#4da6ff');
 
-    sliderSpeedLabel = createP('');
+    sliderSpeedLabel = createDiv('Vitesse: 1x');
     sliderSpeedLabel.parent(panel);
-    sliderSpeedLabel.position(15, 40);
-    sliderSpeedLabel.style('color', '#ffffff');
-    sliderSpeedLabel.style('font-size', '14px');
-    sliderSpeedLabel.style('font-family', 'Arial');
-    sliderSpeedLabel.style('margin', '0');
+    sliderSpeed = createSlider(1, 100, 1);
+    sliderSpeed.parent(panel);
+    sliderSpeed.style('width', '100%');
+    sliderSpeed.style('margin-bottom', '10px');
+    sliderSpeed.input(() => {
+        sliderSpeedLabel.html(`Vitesse: ${sliderSpeed.value()}x`);
+    });
 
-    timeLabel = createP('');
-    timeLabel.parent(panel);
-    timeLabel.position(15, 65);
-    timeLabel.style('color', '#cccccc');
-    timeLabel.style('font-size', '14px');
-    timeLabel.style('font-family', 'Arial');
-    timeLabel.style('margin', '0');
-
-    sliderZoom = createSlider(5, 50, 25, 1);
-    sliderZoom.parent(panel);
-    sliderZoom.position(15, 95);
-    sliderZoom.style('width', '250px');
-    sliderZoom.style('accent-color', '#4da6ff');
-
-    sliderZoomLabel = createP('');
+    sliderZoomLabel = createDiv('Zoom: 1.0x');
     sliderZoomLabel.parent(panel);
-    sliderZoomLabel.position(15, 120);
-    sliderZoomLabel.style('color', '#ffffff');
-    sliderZoomLabel.style('font-size', '14px');
-    sliderZoomLabel.style('font-family', 'Arial');
-    sliderZoomLabel.style('margin', '0');
+    sliderZoom = createSlider(1, 100, 10);
+    sliderZoom.parent(panel);
+    sliderZoom.style('width', '100%');
+    sliderZoom.style('margin-bottom', '15px');
 
-    let methodLabel = createP('Méthode de calcul');
-    methodLabel.parent(panel);
-    methodLabel.position(15, 150);
-    methodLabel.style('color', '#ffffff');
-    methodLabel.style('font-size', '15px');
-    methodLabel.style('font-weight', 'bold');
-    methodLabel.style('font-family', 'Arial');
-    methodLabel.style('margin', '0');
+    timeLabel = createDiv('Temps: 0 jours');
+    timeLabel.parent(panel);
+    timeLabel.style('margin-bottom', '15px');
+    timeLabel.style('font-size', '13px');
 
     methodSelect = createSelect();
     methodSelect.parent(panel);
-    methodSelect.position(15, 180);
-    methodSelect.style('width', '250px');
-    methodSelect.style('padding', '8px');
-    methodSelect.style('border-radius', '8px');
-    methodSelect.style('border', '2px solid #4da6ff');
-    methodSelect.style('background', '#1a1f2e');
-    methodSelect.style('color', 'white');
-    methodSelect.style('font-size', '14px');
-    methodSelect.style('outline', 'none');
+    methodSelect.style('width', '100%');
+    methodSelect.style('padding', '5px');
+    methodSelect.style('background', '#0f1423');
+    methodSelect.style('color', '#fff');
+    methodSelect.style('border', '1px solid #4da6ff');
+    methodSelect.style('border-radius', '5px');
+
+    if (data) {
+        let methodKeys = Object.keys(data);
+        for (let key of methodKeys) {
+            if (key.includes("Terre") || !key.includes(" - ")) {
+                let label = key.replace(/Terre\s*-\s*/i, '').replace(/Euler Asym/i, 'Euler asymétrique');
+                methodSelect.option(label, key);
+            }
+        }
+        selectedMethod = methodKeys.length ? methodKeys[0] : '';
+        methodSelect.selected(selectedMethod);
+    }
 
     methodSelect.changed(() => {
         selectedMethod = methodSelect.value();
         frameIndex = 0;
-        trailEarth = [];
-        trailVenus = [];
-        trailMars = [];
         energyHistory = [];
-        totalSteps = 0;
-        earthRawX = 0; earthRawY = 0;
-        venusRawX = 0; venusRawY = 0;
-        marsRawX = 0; marsRawY = 0;
+        trailMercury = [];
+        trailVenus = [];
+        trailEarth = [];
+        trailMars = [];
     });
-
-    if (data) {
-        let methodKeys = Object.keys(data).filter(key => /euler|rk4/i.test(key));
-        if (methodKeys.length === 0) methodKeys = Object.keys(data);
-
-        for (let key of methodKeys) {
-            let label = key.replace(/Terre\s*-\s*/i, '').replace(/Euler Asym/i, 'Euler asymétrique');
-            methodSelect.option(label, key);
-        }
-
-        selectedMethod = methodKeys.length ? methodKeys[0] : '';
-        methodSelect.selected(selectedMethod);
-    }
 }
 
 function draw() {
@@ -135,28 +116,216 @@ function mousePressed() {
     let my = mouseY - H / 2;
 
     let planetsToCheck = [
+        { name: 'Mercure', x: mercuryRawX, y: mercuryRawY, r: 8 },
+        { name: 'Venus', x: venusRawX, y: venusRawY, r: 12 },
         { name: 'Terre', x: earthRawX, y: earthRawY, r: 14 },
-        { name: 'Venus', x: venusRawX, y: venusRawY, r: 13 },
         { name: 'Mars', x: marsRawX, y: marsRawY, r: 10 }
     ];
 
     for (let p of planetsToCheck) {
-        let ex = p.x * zoom;
-        let ey = p.y * zoom;
-        let r = p.r * zoom;
-        if (dist(mx, my, ex, ey) < r + 15) {
-            selectedPlanet = (selectedPlanet === p.name) ? null : p.name;
-            return;
+        let px = p.x * zoom;
+        let py = p.y * zoom;
+        let d = dist(mx, my, px, py);
+        if (d < p.r + 10) {
+            selectedPlanet = p.name;
+            break;
         }
-    }
-
-    if (dist(mx, my, 0, 0) < 28 * zoom) {
-        selectedPlanet = null;
     }
 }
 
+function drawStars() {
+    push();
+    for (let s of stars) {
+        stroke(255, 255, 255, 200);
+        strokeWeight(s.size);
+        point(s.x, s.y, s.z);
+    }
+    pop();
+}
+
+function drawSoleil(zoom) {
+    push();
+    translate(0, 0, 0);
+    noStroke();
+    if (imgSoleil) {
+        texture(imgSoleil);
+    } else {
+        fill(255, 200, 0);
+    }
+    sphere(30);
+    pop();
+}
+
+function updateAndDrawPlanets(zoom) {
+    if (!data || !selectedMethod) return;
+
+    let methodSuffix = selectedMethod.includes(" - ") ? selectedMethod.split(" - ")[1] : selectedMethod;
+
+    let pMercure, pVenus, pTerre, pMars;
+    let baseData = data[selectedMethod] || data[methodSuffix];
+
+    if (baseData && Array.isArray(baseData) && baseData[0] && baseData[0].length > 6) {
+        totalSteps = baseData[0].length;
+        let step = floor(sliderSpeed.value());
+        frameIndex = (frameIndex + step) % totalSteps;
+        
+        pMercure = baseData[1] ? baseData[1][frameIndex] : null;
+        pVenus = baseData[2] ? baseData[2][frameIndex] : null;
+        pTerre = baseData[3] ? baseData[3][frameIndex] : null;
+        pMars = baseData[4] ? baseData[4][frameIndex] : null;
+    } else {
+        let dataMercury = data["Mercure - " + methodSuffix] || data["Mercure - Euler"];
+        let dataVenus = data["Venus - " + methodSuffix] || data["Venus - Euler"];
+        let dataEarth = data["Terre - " + methodSuffix] || data["Terre - Euler"];
+        let dataMars = data["Mars - " + methodSuffix] || data["Mars - Euler"];
+
+        if (!dataEarth || !dataEarth[frameIndex]) return;
+
+        totalSteps = dataEarth.length;
+        let step = floor(sliderSpeed.value());
+        frameIndex = (frameIndex + step) % totalSteps;
+
+        pMercure = dataMercury ? dataMercury[frameIndex] : null;
+        pVenus = dataVenus ? dataVenus[frameIndex] : null;
+        pTerre = dataEarth[frameIndex];
+        pMars = dataMars ? dataMars[frameIndex] : null;
+    }
+
+    if (pMercure) {
+        mercuryRawX = pMercure[0][0] / 1e9;
+        mercuryRawY = pMercure[0][1] / 1e9;
+        trailMercury.push({ x: mercuryRawX, y: mercuryRawY });
+        if (trailMercury.length > TRAIL_LENGTH) trailMercury.shift();
+        drawPlanet(mercuryRawX * zoom, mercuryRawY * zoom, 8, imgMercure, trailMercury, zoom);
+    }
+
+    if (pVenus) {
+        venusRawX = pVenus[0][0] / 1e9;
+        venusRawY = pVenus[0][1] / 1e9;
+        trailVenus.push({ x: venusRawX, y: venusRawY });
+        if (trailVenus.length > TRAIL_LENGTH) trailVenus.shift();
+        drawPlanet(venusRawX * zoom, venusRawY * zoom, 12, imgVenus, trailVenus, zoom);
+    }
+
+    if (pTerre) {
+        earthRawX = pTerre[0][0] / 1e9;
+        earthRawY = pTerre[0][1] / 1e9;
+        trailEarth.push({ x: earthRawX, y: earthRawY });
+        if (trailEarth.length > TRAIL_LENGTH) trailEarth.shift();
+        drawPlanet(earthRawX * zoom, earthRawY * zoom, 14, imgTerre, trailEarth, zoom);
+
+        let timeSec = pTerre[2];
+        let days = floor(timeSec / (24 * 3600));
+        timeLabel.html(`Temps: ${days} jours`);
+
+        let ec = pTerre[3];
+        let ep = pTerre[4];
+        let et = pTerre[5];
+        energyHistory.push({ ec, ep, et });
+        if (energyHistory.length > MAX_GRAPH_POINTS) energyHistory.shift();
+    }
+
+    if (pMars) {
+        marsRawX = pMars[0][0] / 1e9;
+        marsRawY = pMars[0][1] / 1e9;
+        trailMars.push({ x: marsRawX, y: marsRawY });
+        if (trailMars.length > TRAIL_LENGTH) trailMars.shift();
+        drawPlanet(marsRawX * zoom, marsRawY * zoom, 10, imgMars, trailMars, zoom);
+    }
+}
+
+function drawPlanet(x, y, size, img, trail, zoom) {
+    push();
+    noFill();
+    stroke(100, 150, 255, 60);
+    strokeWeight(1);
+    beginShape();
+    for (let pt of trail) {
+        vertex(pt.x * zoom, pt.y * zoom, 0);
+    }
+    endShape();
+    pop();
+
+    push();
+    translate(x, y, 0);
+    noStroke();
+    if (img) {
+        texture(img);
+    } else {
+        fill(200);
+    }
+    sphere(size);
+    pop();
+}
+
+function drawGraphs() {
+    if (energyHistory.length === 0) return;
+    push();
+    resetMatrix();
+    translate(-W / 2, -H / 2);
+
+    let gx = 300;
+    let gy = H - 150;
+    let gw = 300;
+    let gh = 120;
+
+    fill(15, 20, 35, 200);
+    stroke(77, 166, 255, 100);
+    rect(gx, gy, gw, gh, 10);
+
+    noStroke();
+    fill(255);
+    textSize(12);
+    text("Énergies de la Terre (Ec, Ep, Et)", gx + 10, gy + 20);
+
+    let minE = Infinity;
+    let maxE = -Infinity;
+    for (let e of energyHistory) {
+        if (e.ec < minE) minE = e.ec;
+        if (e.ep < minE) minE = e.ep;
+        if (e.et < minE) minE = e.et;
+        if (e.ec > maxE) maxE = e.ec;
+        if (e.ep > maxE) maxE = e.ep;
+        if (e.et > maxE) maxE = e.et;
+    }
+
+    let range = maxE - minE;
+    if (range === 0) range = 1;
+
+    strokeWeight(1.5);
+
+    stroke(0, 255, 0);
+    noFill();
+    beginShape();
+    for (let i = 0; i < energyHistory.length; i++) {
+        let px = gx + (i / MAX_GRAPH_POINTS) * gw;
+        let py = gy + gh - ((energyHistory[i].ec - minE) / range) * gh;
+        vertex(px, py);
+    }
+    endShape();
+
+    stroke(255, 0, 0);
+    beginShape();
+    for (let i = 0; i < energyHistory.length; i++) {
+        let px = gx + (i / MAX_GRAPH_POINTS) * gw;
+        let py = gy + gh - ((energyHistory[i].ep - minE) / range) * gh;
+        vertex(px, py);
+    }
+    endShape();
+
+    stroke(255, 255, 0);
+    beginShape();
+    for (let i = 0; i < energyHistory.length; i++) {
+        let px = gx + (i / MAX_GRAPH_POINTS) * gw;
+        let py = gy + gh - ((energyHistory[i].et - minE) / range) * gh;
+        vertex(px, py);
+    }
+    endShape();
+    pop();
+}
+
 function windowResized() {
+    resizeCanvas(windowWidth, windowHeight);
     W = windowWidth;
     H = windowHeight;
-    resizeCanvas(W, H);
 }
