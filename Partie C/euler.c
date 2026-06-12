@@ -60,7 +60,7 @@ traj_systeme_solaire euler_traj_systeme_solaire(planete *systeme_solaire, int nb
     //Tab horizontal(ligne temps)
     for(int i=0;i<nb_planetes;i++){
         traj.tab_points[i]=malloc(traj.nb_points*sizeof(point));
-    }
+    } 
     if (traj.nb_points > 0) {
         //Etat initial 
         for(int i=0;i<nb_planetes;i++){
