@@ -188,7 +188,7 @@ function updateCamera() {
 
     let ex = camPanX + camRadius * sin(camTheta) * cos(camPhi);
     let ey = camPanY - camRadius * sin(camPhi);
-    let ez = camRadius * cos(camTheta) * cos(camPhi);
+    let ez = camTargetZ + camRadius * cos(camTheta) * cos(camPhi);
     camera(ex, ey, ez, camPanX, camPanY, camTargetZ, 0, 1, 0);
 }
 

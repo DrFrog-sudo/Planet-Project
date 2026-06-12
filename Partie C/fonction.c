@@ -193,7 +193,7 @@ void export_json_euler(trajectoire traj, char *nom_fichier){
     fprintf(fichier,"{\"%s - Euler\" : [",traj.planete.nom);
     int first = 1;
     for(int i=0;i<traj.nb_points;i++){
-        if (i % 6 != 0 && i != traj.nb_points - 1) continue;
+        if (i % COEF_REDUCTION_JSON != 0 && i != traj.nb_points - 1) continue;
         
         if (!first) {
             fprintf(fichier,",");
@@ -224,7 +224,7 @@ void export_json_euler(trajectoire traj, char *nom_fichier){
 void ecrire_points_json(FILE *fichier, trajectoire traj){
     int first = 1;
     for(int i=0; i<traj.nb_points; i++){
-        if (i % 6 != 0 && i != traj.nb_points - 1) continue;
+        if (i % COEF_REDUCTION_JSON != 0 && i != traj.nb_points - 1) continue;
         
         if (!first) {
             fprintf(fichier,",");
@@ -263,7 +263,7 @@ void ecrire_systeme_json(FILE *fichier, traj_systeme_solaire traj, char *methode
             int first = 1;
             for(int i=0; i<traj.nb_points; i++){
                 current_point++;
-                if (i % 6 != 0 && i != traj.nb_points - 1) {
+                if (i % COEF_REDUCTION_JSON != 0 && i != traj.nb_points - 1) {
                     afficher_barre_chargement(current_point, total_points, prefix_str);
                     continue;
                 }
