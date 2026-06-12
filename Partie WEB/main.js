@@ -1,3 +1,5 @@
+const SIZE_FACTOR = DISPLAY_SCALE / 149.597;
+
 function preload() {
     data = loadJSON('systeme_solaire.json');
     imgSoleil = loadImage('sunTexture.jpg');
@@ -12,20 +14,9 @@ function preload() {
 }
 
 function setup() {
-    W = windowWidth;
-    H = windowHeight;
     createCanvas(W, H, WEBGL);
 
     document.addEventListener('contextmenu', e => e.preventDefault());
-
-    for (let i = 0; i < 500; i++) {
-        stars.push({
-            x: random(-2000, 2000),
-            y: random(-2000, 2000),
-            z: random(-2000, 2000),
-            size: random(1.5, 4)
-        });
-    }
 
     panel = createDiv('');
     panel.position(5, 5);
@@ -58,13 +49,6 @@ function setup() {
         sliderSpeedLabel.html(`Vitesse: ${sliderSpeed.value()}x`);
     });
 
-    sliderZoomLabel = createDiv('Zoom: 1.0x');
-    sliderZoomLabel.parent(panel);
-    sliderZoom = createSlider(1, 100, 10);
-    sliderZoom.parent(panel);
-    sliderZoom.style('width', '100%');
-    sliderZoom.style('margin-bottom', '15px');
-
     timeLabel = createDiv('Temps: 0 jours');
     timeLabel.parent(panel);
     timeLabel.style('margin-bottom', '15px');
@@ -78,6 +62,31 @@ function setup() {
     methodSelect.style('color', '#fff');
     methodSelect.style('border', '1px solid #4da6ff');
     methodSelect.style('border-radius', '5px');
+
+    const planetLabel = createDiv('Planète:');
+    planetLabel.parent(panel);
+    planetLabel.style('margin-top', '12px');
+    planetLabel.style('margin-bottom', '6px');
+    planetLabel.style('font-size', '13px');
+    planetLabel.style('color', '#c5e2ff');
+
+    planetSelect = createSelect();
+    planetSelect.parent(panel);
+    planetSelect.style('width', '100%');
+    planetSelect.style('padding', '5px');
+    planetSelect.style('background', '#0f1423');
+    planetSelect.style('color', '#fff');
+    planetSelect.style('border', '1px solid #4da6ff');
+    planetSelect.style('border-radius', '5px');
+    planetSelect.option('Mercure');
+    planetSelect.option('Venus');
+    planetSelect.option('Terre');
+    planetSelect.option('Mars');
+    planetSelect.option('Jupiter');
+    planetSelect.option('Saturn');
+    planetSelect.option('Uranus');
+    planetSelect.option('Neptune');
+    planetSelect.selected(selectedPlanet);
 
     graphPanel = createDiv('');
     graphPanel.parent(panel);
@@ -142,25 +151,52 @@ function setup() {
         trailUranus = [];
         trailNeptune = [];
     });
+
+    planetSelect.changed(() => {
+        selectedPlanet = planetSelect.value();
+        energyHistory = [];
+    });
 }
 
 function updateCamera() {
+    let targetX = camPanX;
+    let targetY = camPanY;
+    let targetZ = camTargetZ;
+
+    switch (selectedPlanet) {
+        case 'Mercure': targetX = mercuryRawX; targetY = mercuryRawY; targetZ = mercuryRawZ; break;
+        case 'Venus': targetX = venusRawX; targetY = venusRawY; targetZ = venusRawZ; break;
+        case 'Terre': targetX = earthRawX; targetY = earthRawY; targetZ = earthRawZ; break;
+        case 'Mars': targetX = marsRawX; targetY = marsRawY; targetZ = marsRawZ; break;
+        case 'Jupiter': targetX = jupiterRawX; targetY = jupiterRawY; targetZ = jupiterRawZ; break;
+        case 'Saturn': targetX = saturnRawX; targetY = saturnRawY; targetZ = saturnRawZ; break;
+        case 'Uranus': targetX = uranusRawX; targetY = uranusRawY; targetZ = uranusRawZ; break;
+        case 'Neptune': targetX = neptuneRawX; targetY = neptuneRawY; targetZ = neptuneRawZ; break;
+    }
+
+    camPanX = lerp(camPanX, targetX, 0.12);
+    camPanY = lerp(camPanY, targetY, 0.12);
+    camTargetZ = lerp(camTargetZ, targetZ, 0.12);
+
     let ex = camPanX + camRadius * sin(camTheta) * cos(camPhi);
     let ey = camPanY - camRadius * sin(camPhi);
     let ez = camRadius * cos(camTheta) * cos(camPhi);
-    camera(ex, ey, ez, camPanX, camPanY, 0, 0, 1, 0);
+    camera(ex, ey, ez, camPanX, camPanY, camTargetZ, 0, 1, 0);
 }
 
 function draw() {
     background(5, 5, 12);
 
-    const zoom = sliderZoom.value() / 10;
-    sliderZoomLabel.html(`Zoom: ${zoom.toFixed(1)}x`);
+    const zoom = constrain(1000 / camRadius, 0.3, 4);
 
     updateCamera();
 
-    drawStars();
+    noLights();
     drawSoleil(zoom);
+
+    ambientLight(35, 35, 45);
+    pointLight(255, 255, 255, 0, 0, 0);
+
     updateAndDrawPlanets(zoom);
     drawGraphs();
 }
@@ -175,8 +211,9 @@ function mouseDragged() {
         camPanX -= dx * speed;
         camPanY -= dy * speed;
     } else if (mouseButton === RIGHT) {
-        camTheta -= dx * 0.008;
-        camPhi = constrain(camPhi - dy * 0.008, -PI / 2 + 0.05, PI / 2 - 0.05);
+        let speed = 0.008;
+        camTheta -= dx * speed;
+        camPhi = constrain(camPhi - dy * speed, -PI / 2 + 0.05, PI / 2 - 0.05);
     }
 }
 
@@ -190,19 +227,19 @@ function mousePressed() {
     if (mouseX < 350) return;
     if (mouseButton !== LEFT) return;
 
-    const zoom = sliderZoom.value() / 10;
+    const zoom = constrain(1000 / camRadius, 0.3, 4);
     let mx = mouseX - W / 2;
     let my = mouseY - H / 2;
 
     let planetsToCheck = [
-        { name: 'Mercure', x: mercuryRawX, y: mercuryRawY, r: 8 },
-        { name: 'Venus', x: venusRawX, y: venusRawY, r: 12 },
-        { name: 'Terre', x: earthRawX, y: earthRawY, r: 14 },
-        { name: 'Mars', x: marsRawX, y: marsRawY, r: 10 },
-        { name: 'Jupiter', x: jupiterRawX, y: jupiterRawY, r: 20 },
-        { name: 'Saturn', x: saturnRawX, y: saturnRawY, r: 18 },
-        { name: 'Uranus', x: uranusRawX, y: uranusRawY, r: 16 },
-        { name: 'Neptune', x: neptuneRawX, y: neptuneRawY, r: 16 }
+        { name: 'Mercure', x: mercuryRawX, y: mercuryRawY, r: 8 * SIZE_FACTOR },
+        { name: 'Venus', x: venusRawX, y: venusRawY, r: 12 * SIZE_FACTOR },
+        { name: 'Terre', x: earthRawX, y: earthRawY, r: 14 * SIZE_FACTOR },
+        { name: 'Mars', x: marsRawX, y: marsRawY, r: 10 * SIZE_FACTOR },
+        { name: 'Jupiter', x: jupiterRawX, y: jupiterRawY, r: 20 * SIZE_FACTOR },
+        { name: 'Saturn', x: saturnRawX, y: saturnRawY, r: 18 * SIZE_FACTOR },
+        { name: 'Uranus', x: uranusRawX, y: uranusRawY, r: 16 * SIZE_FACTOR },
+        { name: 'Neptune', x: neptuneRawX, y: neptuneRawY, r: 14 * SIZE_FACTOR }
     ];
 
     for (let p of planetsToCheck) {
@@ -212,6 +249,7 @@ function mousePressed() {
         if (d < (p.r * zoom) + 15) {
             if (selectedPlanet !== p.name) {
                 selectedPlanet = p.name;
+                if (planetSelect) planetSelect.selected(selectedPlanet);
                 energyHistory = [];
             }
             break;
@@ -219,26 +257,16 @@ function mousePressed() {
     }
 }
 
-function drawStars() {
-    push();
-    for (let s of stars) {
-        stroke(255, 255, 255, 200);
-        strokeWeight(s.size);
-        point(s.x, s.y, s.z);
-    }
-    pop();
-}
-
 function drawSoleil(zoom) {
     push();
     translate(0, 0, 0);
     noStroke();
-    if (imgSoleil) {
+    if (imgSoleil && imgSoleil.width > 0) {
         texture(imgSoleil);
     } else {
         fill(255, 200, 0);
     }
-    sphere(30 * zoom);
+    sphere(30 * SIZE_FACTOR * zoom);
     pop();
 }
 
@@ -269,7 +297,7 @@ function updateAndDrawPlanets(zoom) {
         let dataEarth = data["Terre - " + methodSuffix] || data["Terre - Euler"];
         let dataMars = data["Mars - " + methodSuffix] || data["Mars - Euler"];
         let dataJupiter = data["Jupiter - " + methodSuffix] || data["Jupiter - Euler"];
-        let dataSaturn = data["Saturn - " + methodSuffix] || data["Saturn - Euler"];
+        let dataSaturn = data["Saturn - " + methodSuffix] || data["Saturne - " + methodSuffix] || data["Saturn - Euler"] || data["Saturne - Euler"];
         let dataUranus = data["Uranus - " + methodSuffix] || data["Uranus - Euler"];
         let dataNeptune = data["Neptune - " + methodSuffix] || data["Neptune - Euler"];
 
@@ -290,63 +318,71 @@ function updateAndDrawPlanets(zoom) {
     }
 
     if (pMercure) {
-        mercuryRawX = pMercure[0][0] / 1e9;
-        mercuryRawY = pMercure[0][1] / 1e9;
-        trailMercury.push({ x: mercuryRawX, y: mercuryRawY });
+        mercuryRawX = (pMercure[0][0] / AU_METERS) * DISPLAY_SCALE;
+        mercuryRawY = (pMercure[0][1] / AU_METERS) * DISPLAY_SCALE;
+        mercuryRawZ = (pMercure[0][2] / AU_METERS) * DISPLAY_SCALE;
+        trailMercury.push({ x: mercuryRawX, y: mercuryRawY, z: mercuryRawZ });
         if (trailMercury.length > TRAIL_LENGTH) trailMercury.shift();
-        drawPlanet(mercuryRawX * zoom, mercuryRawY * zoom, 8 * zoom, imgMercure, trailMercury, zoom);
+        drawPlanet(mercuryRawX * zoom, mercuryRawY * zoom, mercuryRawZ * zoom, 8 * SIZE_FACTOR * zoom, imgMercure, trailMercury, zoom);
     }
     if (pVenus) {
-        venusRawX = pVenus[0][0] / 1e9;
-        venusRawY = pVenus[0][1] / 1e9;
-        trailVenus.push({ x: venusRawX, y: venusRawY });
+        venusRawX = (pVenus[0][0] / AU_METERS) * DISPLAY_SCALE;
+        venusRawY = (pVenus[0][1] / AU_METERS) * DISPLAY_SCALE;
+        venusRawZ = (pVenus[0][2] / AU_METERS) * DISPLAY_SCALE;
+        trailVenus.push({ x: venusRawX, y: venusRawY, z: venusRawZ });
         if (trailVenus.length > TRAIL_LENGTH) trailVenus.shift();
-        drawPlanet(venusRawX * zoom, venusRawY * zoom, 12 * zoom, imgVenus, trailVenus, zoom);
+        drawPlanet(venusRawX * zoom, venusRawY * zoom, venusRawZ * zoom, 12 * SIZE_FACTOR * zoom, imgVenus, trailVenus, zoom);
     }
     if (pTerre) {
-        earthRawX = pTerre[0][0] / 1e9;
-        earthRawY = pTerre[0][1] / 1e9;
-        trailEarth.push({ x: earthRawX, y: earthRawY });
+        earthRawX = (pTerre[0][0] / AU_METERS) * DISPLAY_SCALE;
+        earthRawY = (pTerre[0][1] / AU_METERS) * DISPLAY_SCALE;
+        earthRawZ = (pTerre[0][2] / AU_METERS) * DISPLAY_SCALE;
+        trailEarth.push({ x: earthRawX, y: earthRawY, z: earthRawZ });
         if (trailEarth.length > TRAIL_LENGTH) trailEarth.shift();
-        drawPlanet(earthRawX * zoom, earthRawY * zoom, 14 * zoom, imgTerre, trailEarth, zoom);
+        drawPlanet(earthRawX * zoom, earthRawY * zoom, earthRawZ * zoom, 14 * SIZE_FACTOR * zoom, imgTerre, trailEarth, zoom);
         let timeSec = pTerre[2];
         let days = floor(timeSec / (24 * 3600));
         timeLabel.html(`Temps: ${days} jours`);
     }
     if (pMars) {
-        marsRawX = pMars[0][0] / 1e9;
-        marsRawY = pMars[0][1] / 1e9;
-        trailMars.push({ x: marsRawX, y: marsRawY });
+        marsRawX = (pMars[0][0] / AU_METERS) * DISPLAY_SCALE;
+        marsRawY = (pMars[0][1] / AU_METERS) * DISPLAY_SCALE;
+        marsRawZ = (pMars[0][2] / AU_METERS) * DISPLAY_SCALE;
+        trailMars.push({ x: marsRawX, y: marsRawY, z: marsRawZ });
         if (trailMars.length > TRAIL_LENGTH) trailMars.shift();
-        drawPlanet(marsRawX * zoom, marsRawY * zoom, 10 * zoom, imgMars, trailMars, zoom);
+        drawPlanet(marsRawX * zoom, marsRawY * zoom, marsRawZ * zoom, 10 * SIZE_FACTOR * zoom, imgMars, trailMars, zoom);
     }
     if (pJupiter) {
-        jupiterRawX = pJupiter[0][0] / 1e9;
-        jupiterRawY = pJupiter[0][1] / 1e9;
-        trailJupiter.push({ x: jupiterRawX, y: jupiterRawY });
+        jupiterRawX = (pJupiter[0][0] / AU_METERS) * DISPLAY_SCALE;
+        jupiterRawY = (pJupiter[0][1] / AU_METERS) * DISPLAY_SCALE;
+        jupiterRawZ = (pJupiter[0][2] / AU_METERS) * DISPLAY_SCALE;
+        trailJupiter.push({ x: jupiterRawX, y: jupiterRawY, z: jupiterRawZ });
         if (trailJupiter.length > TRAIL_LENGTH) trailJupiter.shift();
-        drawPlanet(jupiterRawX * zoom, jupiterRawY * zoom, 20 * zoom, imgJupiter, trailJupiter, zoom);
+        drawPlanet(jupiterRawX * zoom, jupiterRawY * zoom, jupiterRawZ * zoom, 20 * SIZE_FACTOR * zoom, imgJupiter, trailJupiter, zoom);
     }
     if (pSaturn) {
-        saturnRawX = pSaturn[0][0] / 1e9;
-        saturnRawY = pSaturn[0][1] / 1e9;
-        trailSaturn.push({ x: saturnRawX, y: saturnRawY });
+        saturnRawX = (pSaturn[0][0] / AU_METERS) * DISPLAY_SCALE;
+        saturnRawY = (pSaturn[0][1] / AU_METERS) * DISPLAY_SCALE;
+        saturnRawZ = (pSaturn[0][2] / AU_METERS) * DISPLAY_SCALE;
+        trailSaturn.push({ x: saturnRawX, y: saturnRawY, z: saturnRawZ });
         if (trailSaturn.length > TRAIL_LENGTH) trailSaturn.shift();
-        drawPlanet(saturnRawX * zoom, saturnRawY * zoom, 18 * zoom, imgSaturn, trailSaturn, zoom);
+        drawPlanet(saturnRawX * zoom, saturnRawY * zoom, saturnRawZ * zoom, 18 * SIZE_FACTOR * zoom, imgSaturn, trailSaturn, zoom);
     }
     if (pUranus) {
-        uranusRawX = pUranus[0][0] / 1e9;
-        uranusRawY = pUranus[0][1] / 1e9;
-        trailUranus.push({ x: uranusRawX, y: uranusRawY });
+        uranusRawX = (pUranus[0][0] / AU_METERS) * DISPLAY_SCALE;
+        uranusRawY = (pUranus[0][1] / AU_METERS) * DISPLAY_SCALE;
+        uranusRawZ = (pUranus[0][2] / AU_METERS) * DISPLAY_SCALE;
+        trailUranus.push({ x: uranusRawX, y: uranusRawY, z: uranusRawZ });
         if (trailUranus.length > TRAIL_LENGTH) trailUranus.shift();
-        drawPlanet(uranusRawX * zoom, uranusRawY * zoom, 16 * zoom, imgUranus, trailUranus, zoom);
+        drawPlanet(uranusRawX * zoom, uranusRawY * zoom, uranusRawZ * zoom, 16 * SIZE_FACTOR * zoom, imgUranus, trailUranus, zoom);
     }
     if (pNeptune) {
-        neptuneRawX = pNeptune[0][0] / 1e9;
-        neptuneRawY = pNeptune[0][1] / 1e9;
-        trailNeptune.push({ x: neptuneRawX, y: neptuneRawY });
+        neptuneRawX = (pNeptune[0][0] / AU_METERS) * DISPLAY_SCALE;
+        neptuneRawY = (pNeptune[0][1] / AU_METERS) * DISPLAY_SCALE;
+        neptuneRawZ = (pNeptune[0][2] / AU_METERS) * DISPLAY_SCALE;
+        trailNeptune.push({ x: neptuneRawX, y: neptuneRawY, z: neptuneRawZ });
         if (trailNeptune.length > TRAIL_LENGTH) trailNeptune.shift();
-        drawPlanet(neptuneRawX * zoom, neptuneRawY * zoom, 14 * zoom, imgNeptune, trailNeptune, zoom);
+        drawPlanet(neptuneRawX * zoom, neptuneRawY * zoom, neptuneRawZ * zoom, 14 * SIZE_FACTOR * zoom, imgNeptune, trailNeptune, zoom);
     }
 
     let activePlanetData = null;
@@ -368,21 +404,22 @@ function updateAndDrawPlanets(zoom) {
     }
 }
 
-function drawPlanet(x, y, size, img, trail, zoom) {
+function drawPlanet(x, y, z, size, img, trail, zoom) {
     push();
     noFill();
     stroke(100, 150, 255, 60);
     strokeWeight(1);
     beginShape();
     for (let pt of trail) {
-        vertex(pt.x * zoom, pt.y * zoom, 0);
+        vertex(pt.x * zoom, pt.y * zoom, pt.z * zoom);
     }
     endShape();
     pop();
 
     push();
-    translate(x, y, 0);
+    translate(x, y, z);
     noStroke();
+    ambientMaterial(255);
     if (img) {
         texture(img);
     } else {
@@ -462,7 +499,7 @@ function drawGraphs() {
 }
 
 function windowResized() {
-    resizeCanvas(windowWidth, windowHeight);
-    W = windowWidth;
-    H = windowHeight;
+    W = window.innerWidth || 1200;
+    H = window.innerHeight || 800;
+    resizeCanvas(W, H);
 }
