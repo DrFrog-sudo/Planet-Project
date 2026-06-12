@@ -3,9 +3,9 @@
 
 #include <stdio.h>
 
-#define PasTemps (3600.0*24.0) // En seconde
+#define PasTemps (3600.0*2.0) // En seconde
 #define G 6.67430e-11 // Constante gravitation
-#define nb_annee 160 // nombre d'année à simuler
+#define nb_annee 80 // nombre d'année à simuler
 
 typedef struct vect{
     double x;
