@@ -11,6 +11,8 @@ function preload() {
     imgSaturn = loadImage('saturn.jpg');
     imgUranus = loadImage('uranus.jpg');
     imgNeptune = loadImage('neptune.jpg');
+    imgHalley = loadImage('comet.jpg');
+    imgMoon = loadImage('moon.jpg');
 }
 
 function setup() {
@@ -86,6 +88,8 @@ function setup() {
     planetSelect.option('Saturn');
     planetSelect.option('Uranus');
     planetSelect.option('Neptune');
+    planetSelect.option('Halley');
+    planetSelect.option('Lune');
     planetSelect.selected(selectedPlanet);
 
     graphPanel = createDiv('');
@@ -150,6 +154,8 @@ function setup() {
         trailSaturn = [];
         trailUranus = [];
         trailNeptune = [];
+        trailHalley = [];
+        trailMoon = [];
     });
 
     planetSelect.changed(() => {
@@ -172,6 +178,8 @@ function updateCamera() {
         case 'Saturn': targetX = saturnRawX; targetY = saturnRawY; targetZ = saturnRawZ; break;
         case 'Uranus': targetX = uranusRawX; targetY = uranusRawY; targetZ = uranusRawZ; break;
         case 'Neptune': targetX = neptuneRawX; targetY = neptuneRawY; targetZ = neptuneRawZ; break;
+        case 'Halley': targetX = halleyRawX; targetY = halleyRawY; targetZ = halleyRawZ; break;
+        case 'Lune': targetX = moonRawX; targetY = moonRawY; targetZ = moonRawZ; break;
     }
 
     camPanX = lerp(camPanX, targetX, 0.12);
@@ -239,7 +247,9 @@ function mousePressed() {
         { name: 'Jupiter', x: jupiterRawX, y: jupiterRawY, r: 20 * SIZE_FACTOR },
         { name: 'Saturn', x: saturnRawX, y: saturnRawY, r: 18 * SIZE_FACTOR },
         { name: 'Uranus', x: uranusRawX, y: uranusRawY, r: 16 * SIZE_FACTOR },
-        { name: 'Neptune', x: neptuneRawX, y: neptuneRawY, r: 14 * SIZE_FACTOR }
+        { name: 'Neptune', x: neptuneRawX, y: neptuneRawY, r: 14 * SIZE_FACTOR },
+        { name: 'Halley', x: halleyRawX, y: halleyRawY, r: 2 * SIZE_FACTOR },
+        { name: 'Lune', x: moonRawX, y: moonRawY, r: 4 * SIZE_FACTOR }
     ];
 
     for (let p of planetsToCheck) {
@@ -275,7 +285,7 @@ function updateAndDrawPlanets(zoom) {
 
     let methodSuffix = selectedMethod.includes(" - ") ? selectedMethod.split(" - ")[1] : selectedMethod;
 
-    let pMercure, pVenus, pTerre, pMars, pJupiter, pSaturn, pUranus, pNeptune;
+    let pMercure, pVenus, pTerre, pMars, pJupiter, pSaturn, pUranus, pNeptune, pHalley, pMoon;
     let baseData = data[selectedMethod] || data[methodSuffix];
 
     if (baseData && Array.isArray(baseData) && baseData[0] && baseData[0].length > 6) {
@@ -291,6 +301,8 @@ function updateAndDrawPlanets(zoom) {
         pSaturn = baseData[6] ? baseData[6][frameIndex] : null;
         pUranus = baseData[7] ? baseData[7][frameIndex] : null;
         pNeptune = baseData[8] ? baseData[8][frameIndex] : null;
+        pHalley = baseData[9] ? baseData[9][frameIndex] : null;
+        pMoon = baseData[10] ? baseData[10][frameIndex] : null;
     } else {
         let dataMercury = data["Mercure - " + methodSuffix] || data["Mercure - Euler"];
         let dataVenus = data["Venus - " + methodSuffix] || data["Venus - Euler"];
@@ -300,6 +312,8 @@ function updateAndDrawPlanets(zoom) {
         let dataSaturn = data["Saturn - " + methodSuffix] || data["Saturne - " + methodSuffix] || data["Saturn - Euler"] || data["Saturne - Euler"];
         let dataUranus = data["Uranus - " + methodSuffix] || data["Uranus - Euler"];
         let dataNeptune = data["Neptune - " + methodSuffix] || data["Neptune - Euler"];
+        let dataHalley = data["Halley - " + methodSuffix] || data["Halley - Euler"];
+        let dataMoon = data["Lune - " + methodSuffix] || data["Lune - Euler"] || data["Moon - " + methodSuffix] || data["Moon - Euler"];
 
         if (!dataEarth || !dataEarth[frameIndex]) return;
 
@@ -315,6 +329,8 @@ function updateAndDrawPlanets(zoom) {
         pSaturn = dataSaturn ? dataSaturn[frameIndex] : null;
         pUranus = dataUranus ? dataUranus[frameIndex] : null;
         pNeptune = dataNeptune ? dataNeptune[frameIndex] : null;
+        pHalley = dataHalley ? dataHalley[frameIndex] : null;
+        pMoon = dataMoon ? dataMoon[frameIndex] : null;
     }
 
     if (pMercure) {
@@ -384,7 +400,22 @@ function updateAndDrawPlanets(zoom) {
         if (trailNeptune.length > TRAIL_LENGTH) trailNeptune.shift();
         drawPlanet(neptuneRawX * zoom, neptuneRawY * zoom, neptuneRawZ * zoom, 14 * SIZE_FACTOR * zoom, imgNeptune, trailNeptune, zoom);
     }
-
+    if (pHalley) {
+        halleyRawX = (pHalley[0][0] / AU_METERS) * DISPLAY_SCALE;
+        halleyRawY = (pHalley[0][1] / AU_METERS) * DISPLAY_SCALE;
+        halleyRawZ = (pHalley[0][2] / AU_METERS) * DISPLAY_SCALE;
+        trailHalley.push({ x: halleyRawX, y: halleyRawY, z: halleyRawZ });
+        if (trailHalley.length > TRAIL_LENGTH) trailHalley.shift();
+        drawPlanet(halleyRawX * zoom, halleyRawY * zoom, halleyRawZ * zoom, 2 * SIZE_FACTOR * zoom, imgHalley, trailHalley, zoom);
+    }
+    if (pMoon) {
+        moonRawX = (pMoon[0][0] / AU_METERS) * DISPLAY_SCALE;
+        moonRawY = (pMoon[0][1] / AU_METERS) * DISPLAY_SCALE;
+        moonRawZ = (pMoon[0][2] / AU_METERS) * DISPLAY_SCALE;
+        trailMoon.push({ x: moonRawX, y: moonRawY, z: moonRawZ });
+        if (trailMoon.length > TRAIL_LENGTH) trailMoon.shift();
+        drawPlanet(moonRawX * zoom, moonRawY * zoom, moonRawZ * zoom, 4 * SIZE_FACTOR * zoom, imgMoon, trailMoon, zoom);
+    }
     let activePlanetData = null;
     if (selectedPlanet === 'Mercure') activePlanetData = pMercure;
     else if (selectedPlanet === 'Venus') activePlanetData = pVenus;
@@ -394,6 +425,8 @@ function updateAndDrawPlanets(zoom) {
     else if (selectedPlanet === 'Saturn') activePlanetData = pSaturn;
     else if (selectedPlanet === 'Uranus') activePlanetData = pUranus;
     else if (selectedPlanet === 'Neptune') activePlanetData = pNeptune;
+    else if (selectedPlanet === 'Halley') activePlanetData = pHalley;
+    else if (selectedPlanet === 'Lune') activePlanetData = pMoon;
 
     if (activePlanetData) {
         let ec = activePlanetData[3];
@@ -478,7 +511,7 @@ function drawGraphs() {
             let px = (j / (MAX_GRAPH_POINTS - 1)) * w;
             let py = h - ((val - minE) / range) * h;
             if (j === 0) ctx.moveTo(px, py);
-            else ctx.lineTo(px, py);
+            box = ctx.lineTo(px, py);
         }
         ctx.stroke();
 
