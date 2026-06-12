@@ -3,8 +3,7 @@ function formatSpeed(h) {
     if (h < 168) return `${(h / 24).toFixed(1)} days`;
     if (h < 720) return `${(h / 168).toFixed(1)} weeks`;
     return `${(h / 720).toFixed(1)} months`;
-}
-
+}    
 function formatElapsed(h) {
     if (h < 24) return `${floor(h)}h`;
     if (h < 168) return `${floor(h / 24)}d ${floor(h % 24)}h`;

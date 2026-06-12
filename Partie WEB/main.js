@@ -16,6 +16,8 @@ function setup() {
     H = windowHeight;
     createCanvas(W, H, WEBGL);
 
+    document.addEventListener('contextmenu', e => e.preventDefault());
+
     for (let i = 0; i < 500; i++) {
         stars.push({
             x: random(-2000, 2000),
@@ -142,13 +144,20 @@ function setup() {
     });
 }
 
+function updateCamera() {
+    let ex = camPanX + camRadius * sin(camTheta) * cos(camPhi);
+    let ey = camPanY - camRadius * sin(camPhi);
+    let ez = camRadius * cos(camTheta) * cos(camPhi);
+    camera(ex, ey, ez, camPanX, camPanY, 0, 0, 1, 0);
+}
+
 function draw() {
     background(5, 5, 12);
 
     const zoom = sliderZoom.value() / 10;
     sliderZoomLabel.html(`Zoom: ${zoom.toFixed(1)}x`);
 
-    orbitControl(2, 2, 0.1);
+    updateCamera();
 
     drawStars();
     drawSoleil(zoom);
@@ -156,8 +165,30 @@ function draw() {
     drawGraphs();
 }
 
+function mouseDragged() {
+    if (mouseX < 350) return;
+    let dx = mouseX - pmouseX;
+    let dy = mouseY - pmouseY;
+
+    if (mouseButton === LEFT) {
+        let speed = camRadius * 0.002;
+        camPanX -= dx * speed;
+        camPanY -= dy * speed;
+    } else if (mouseButton === RIGHT) {
+        camTheta -= dx * 0.008;
+        camPhi = constrain(camPhi - dy * 0.008, -PI / 2 + 0.05, PI / 2 - 0.05);
+    }
+}
+
+function mouseWheel(event) {
+    if (mouseX < 350) return false;
+    camRadius = constrain(camRadius + event.delta, 50, 10000);
+    return false;
+}
+
 function mousePressed() {
     if (mouseX < 350) return;
+    if (mouseButton !== LEFT) return;
 
     const zoom = sliderZoom.value() / 10;
     let mx = mouseX - W / 2;
@@ -178,7 +209,7 @@ function mousePressed() {
         let px = p.x * zoom;
         let py = p.y * zoom;
         let d = dist(mx, my, px, py);
-        if (d < p.r + 15) {
+        if (d < (p.r * zoom) + 15) {
             if (selectedPlanet !== p.name) {
                 selectedPlanet = p.name;
                 energyHistory = [];
@@ -207,7 +238,7 @@ function drawSoleil(zoom) {
     } else {
         fill(255, 200, 0);
     }
-    sphere(30);
+    sphere(30 * zoom);
     pop();
 }
 
@@ -223,7 +254,7 @@ function updateAndDrawPlanets(zoom) {
         totalSteps = baseData[0].length;
         let step = floor(sliderSpeed.value());
         frameIndex = (frameIndex + step) % totalSteps;
-        
+
         pMercure = baseData[1] ? baseData[1][frameIndex] : null;
         pVenus = baseData[2] ? baseData[2][frameIndex] : null;
         pTerre = baseData[3] ? baseData[3][frameIndex] : null;
@@ -263,64 +294,59 @@ function updateAndDrawPlanets(zoom) {
         mercuryRawY = pMercure[0][1] / 1e9;
         trailMercury.push({ x: mercuryRawX, y: mercuryRawY });
         if (trailMercury.length > TRAIL_LENGTH) trailMercury.shift();
-        drawPlanet(mercuryRawX * zoom, mercuryRawY * zoom, 8, imgMercure, trailMercury, zoom);
+        drawPlanet(mercuryRawX * zoom, mercuryRawY * zoom, 8 * zoom, imgMercure, trailMercury, zoom);
     }
-
     if (pVenus) {
         venusRawX = pVenus[0][0] / 1e9;
         venusRawY = pVenus[0][1] / 1e9;
         trailVenus.push({ x: venusRawX, y: venusRawY });
         if (trailVenus.length > TRAIL_LENGTH) trailVenus.shift();
-        drawPlanet(venusRawX * zoom, venusRawY * zoom, 12, imgVenus, trailVenus, zoom);
+        drawPlanet(venusRawX * zoom, venusRawY * zoom, 12 * zoom, imgVenus, trailVenus, zoom);
     }
-
     if (pTerre) {
         earthRawX = pTerre[0][0] / 1e9;
         earthRawY = pTerre[0][1] / 1e9;
         trailEarth.push({ x: earthRawX, y: earthRawY });
         if (trailEarth.length > TRAIL_LENGTH) trailEarth.shift();
-        drawPlanet(earthRawX * zoom, earthRawY * zoom, 14, imgTerre, trailEarth, zoom);
-
+        drawPlanet(earthRawX * zoom, earthRawY * zoom, 14 * zoom, imgTerre, trailEarth, zoom);
         let timeSec = pTerre[2];
         let days = floor(timeSec / (24 * 3600));
         timeLabel.html(`Temps: ${days} jours`);
     }
-
     if (pMars) {
         marsRawX = pMars[0][0] / 1e9;
         marsRawY = pMars[0][1] / 1e9;
         trailMars.push({ x: marsRawX, y: marsRawY });
         if (trailMars.length > TRAIL_LENGTH) trailMars.shift();
-        drawPlanet(marsRawX * zoom, marsRawY * zoom, 10, imgMars, trailMars, zoom);
+        drawPlanet(marsRawX * zoom, marsRawY * zoom, 10 * zoom, imgMars, trailMars, zoom);
     }
-
     if (pJupiter) {
         jupiterRawX = pJupiter[0][0] / 1e9;
         jupiterRawY = pJupiter[0][1] / 1e9;
         trailJupiter.push({ x: jupiterRawX, y: jupiterRawY });
         if (trailJupiter.length > TRAIL_LENGTH) trailJupiter.shift();
-        drawPlanet(jupiterRawX * zoom, jupiterRawY * zoom, 20, imgJupiter, trailJupiter, zoom);
+        drawPlanet(jupiterRawX * zoom, jupiterRawY * zoom, 20 * zoom, imgJupiter, trailJupiter, zoom);
     }
     if (pSaturn) {
         saturnRawX = pSaturn[0][0] / 1e9;
         saturnRawY = pSaturn[0][1] / 1e9;
         trailSaturn.push({ x: saturnRawX, y: saturnRawY });
         if (trailSaturn.length > TRAIL_LENGTH) trailSaturn.shift();
-        drawPlanet(saturnRawX * zoom, saturnRawY * zoom, 18, imgSaturn, trailSaturn, zoom);
+        drawPlanet(saturnRawX * zoom, saturnRawY * zoom, 18 * zoom, imgSaturn, trailSaturn, zoom);
     }
     if (pUranus) {
         uranusRawX = pUranus[0][0] / 1e9;
         uranusRawY = pUranus[0][1] / 1e9;
         trailUranus.push({ x: uranusRawX, y: uranusRawY });
         if (trailUranus.length > TRAIL_LENGTH) trailUranus.shift();
-        drawPlanet(uranusRawX * zoom, uranusRawY * zoom, 16, imgUranus, trailUranus, zoom);
+        drawPlanet(uranusRawX * zoom, uranusRawY * zoom, 16 * zoom, imgUranus, trailUranus, zoom);
     }
     if (pNeptune) {
         neptuneRawX = pNeptune[0][0] / 1e9;
         neptuneRawY = pNeptune[0][1] / 1e9;
         trailNeptune.push({ x: neptuneRawX, y: neptuneRawY });
         if (trailNeptune.length > TRAIL_LENGTH) trailNeptune.shift();
-        drawPlanet(neptuneRawX * zoom, neptuneRawY * zoom, 14, imgNeptune, trailNeptune, zoom);
+        drawPlanet(neptuneRawX * zoom, neptuneRawY * zoom, 14 * zoom, imgNeptune, trailNeptune, zoom);
     }
 
     let activePlanetData = null;
@@ -414,12 +440,8 @@ function drawGraphs() {
             let val = energyHistory[j][key];
             let px = (j / (MAX_GRAPH_POINTS - 1)) * w;
             let py = h - ((val - minE) / range) * h;
-
-            if (j === 0) {
-                ctx.moveTo(px, py);
-            } else {
-                ctx.lineTo(px, py);
-            }
+            if (j === 0) ctx.moveTo(px, py);
+            else ctx.lineTo(px, py);
         }
         ctx.stroke();
 
@@ -432,10 +454,8 @@ function drawGraphs() {
         ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
         ctx.font = '10px sans-serif';
         ctx.textAlign = 'right';
-
         ctx.textBaseline = 'top';
         ctx.fillText(maxE.toExponential(2), w - 5, 4);
-
         ctx.textBaseline = 'bottom';
         ctx.fillText(minE.toExponential(2), w - 5, h - 4);
     }
