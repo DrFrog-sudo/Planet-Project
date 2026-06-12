@@ -3,9 +3,9 @@
 
 #include <stdio.h>
 
-#define PasTemps 3600 // En seconde
+#define PasTemps (3600.0*24.0) // En seconde
 #define G 6.67430e-11 // Constante gravitation
-#define nb_annee 15 // nombre d'année à simuler
+#define nb_annee 160 // nombre d'année à simuler
 
 typedef struct vect{
     double x;
@@ -16,7 +16,7 @@ typedef struct vect{
 typedef struct point{
     vect pos;
     vect vit;
-    int temps;
+    double temps;
     double ec;
     double ep;
     double et;
@@ -36,7 +36,8 @@ typedef struct trajectoire{
 
 typedef struct traj_systeme_solaire{
     int nb_points;
-    planete systeme_solaire[4];
+    int nb_planetes;
+    planete *systeme_solaire;
     point **tab_points;
 }traj_systeme_solaire;
 
@@ -53,42 +54,43 @@ vect mul_vect(vect v1, vect v2);
 // Calcul Force
 vect gravitation(planete p1, planete p2);
 vect acceleration(planete p1, planete p2);
-vect acceleration_n_corps(int index_p, planete systeme_solaire[4], int nb_planetes);
+vect acceleration_n_corps(int index_p, planete *systeme_solaire, int nb_planetes);
 
 // Calcul vitesse position
 vect calcul_vitesse_future(point p1, vect acceleration);
-vect calcul_vitesse_future_n_corps(point p1, int index_p, planete systeme_solaire[4], int nb_planetes);
+vect calcul_vitesse_future_n_corps(point p1, int index_p, planete *systeme_solaire, int nb_planetes);
 vect calcul_position_future(point p1, vect vitesse);
-vect calcul_position_future_n_corps(point p1, int index_p, planete systeme_solaire[4], int nb_planetes);
+vect calcul_position_future_n_corps(point p1, int index_p, planete *systeme_solaire, int nb_planetes);
 
 //Euler
 point point_suivant_euler(point point_actuel, planete p_etudie, planete soleil);
-point point_suivant_n_corps(point point_actuel, int index_p, planete systeme_solaire[4], int nb_planetes);
-trajectoire euler_traj_planete(planete p, planete soleil, int t_max);
-traj_systeme_solaire euler_traj_systeme_solaire(planete systeme_solaire[4], int nb_planetes, int t_max);
+point point_suivant_n_corps(point point_actuel, int index_p, planete *systeme_solaire, int nb_planetes);
+trajectoire euler_traj_planete(planete p, planete soleil, double t_max);
+traj_systeme_solaire euler_traj_systeme_solaire(planete *systeme_solaire, int nb_planetes, double t_max);
 
 // Euler Asymétrique
 point point_suivant_euler_asym(point point_actuel, planete p_etudie, planete soleil);
-point point_suivant_euler_asym_n_corps(point point_actuel, int index_p, planete systeme_solaire[4], int nb_planetes);
-trajectoire euler_asym_traj_planete(planete p, planete soleil, int t_max);
-traj_systeme_solaire euler_asym_traj_systeme_solaire(planete systeme_solaire[4], int nb_planetes, int t_max);
+point point_suivant_euler_asym_n_corps(point point_actuel, int index_p, planete *systeme_solaire, int nb_planetes);
+trajectoire euler_asym_traj_planete(planete p, planete soleil, double t_max);
+traj_systeme_solaire euler_asym_traj_systeme_solaire(planete *systeme_solaire, int nb_planetes, double t_max);
 
 // Runge-Kutta
 point rk4_suivant(point point_actuel, planete p_etudie, planete soleil);
-point rk4_suivant_n_corps(point point_actuel, int index_p, planete systeme_solaire[4], int nb_planetes);
-trajectoire rk4_traj_planete(planete p, planete soleil, int t_max);
-traj_systeme_solaire rk4_traj_systeme_solaire(planete systeme_solaire[4], int nb_planetes, int t_max);
+point rk4_suivant_n_corps(point point_actuel, int index_p, planete *systeme_solaire, int nb_planetes);
+trajectoire rk4_traj_planete(planete p, planete soleil, double t_max);
+traj_systeme_solaire rk4_traj_systeme_solaire(planete *systeme_solaire, int nb_planetes, double t_max);
 
 // Calcul energie
 double p_energie(planete p, planete soleil, point pt);
 double c_energie(planete p, point pt);
 double t_energie(planete p, planete soleil, point pt);
-double p_energie_n_corps(int index_p, planete systeme_solaire[4], int nb_planetes);
-double c_energie_n_corps(int index_p, planete systeme_solaire[4], int nb_planetes);
-double t_energie_n_corps(int index_p, planete systeme_solaire[4], int nb_planetes);
+double p_energie_n_corps(int index_p, planete *systeme_solaire, int nb_planetes);
+double c_energie_n_corps(int index_p, planete *systeme_solaire, int nb_planetes);
+double t_energie_n_corps(int index_p, planete *systeme_solaire, int nb_planetes);
 
 // Affichage
 void afficher_vect(vect v);
+void afficher_barre_chargement(int actuel, int total, const char* prefixe);
 
 // Export en json
 void export_json_euler(trajectoire traj, char *nom_fichier);

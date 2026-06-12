@@ -21,15 +21,16 @@ point point_suivant_euler_asym(point point_actuel, planete p_etudie, planete sol
     return new_point;
 }
 
-trajectoire euler_asym_traj_planete(planete p, planete soleil, int t_max){
+trajectoire euler_asym_traj_planete(planete p, planete soleil, double t_max){
     trajectoire traj;
     traj.planete=p;
-    traj.nb_points=t_max/PasTemps;
+    traj.nb_points=(int)(t_max/PasTemps);
     traj.tab_points=malloc(traj.nb_points*sizeof(point));
     if (traj.nb_points > 0) {
         traj.tab_points[0]=p.pos_vit;
         for(int i=1;i<traj.nb_points;i++){
             traj.tab_points[i]=point_suivant_euler_asym(traj.tab_points[i-1],p,soleil);
+            afficher_barre_chargement(i+1, traj.nb_points, "Euler Asym 1P");
         }
     }
     return traj;
@@ -49,13 +50,13 @@ void export_json_euler_asym(trajectoire traj, char *nom_fichier){
 
 // ------ N-Corps ------
 
-point point_suivant_euler_asym_n_corps(point point_actuel, int index_p, planete systeme_solaire[4], int nb_planetes){
+point point_suivant_euler_asym_n_corps(point point_actuel, int index_p, planete *systeme_solaire, int nb_planetes){
     // Calcul nouvelle po
     
     // Calcul nouvelle po
     vect new_pos=calcul_position_future(point_actuel,point_actuel.vit);
     
-    planete sys_temp[4];
+    planete *sys_temp = malloc(nb_planetes * sizeof(planete));
     for(int i=0; i<nb_planetes; i++) sys_temp[i] = systeme_solaire[i];
     sys_temp[index_p].pos_vit.pos = new_pos;
     
@@ -71,12 +72,15 @@ point point_suivant_euler_asym_n_corps(point point_actuel, int index_p, planete 
     new_point.ep=p_energie_n_corps(index_p,sys_temp,nb_planetes);
     new_point.ec=c_energie_n_corps(index_p,sys_temp,nb_planetes);
     new_point.et=t_energie_n_corps(index_p,sys_temp,nb_planetes);
+    free(sys_temp);
     return new_point;
 }
 
-traj_systeme_solaire euler_asym_traj_systeme_solaire(planete systeme_solaire[4], int nb_planetes, int t_max){
+traj_systeme_solaire euler_asym_traj_systeme_solaire(planete *systeme_solaire, int nb_planetes, double t_max){
     traj_systeme_solaire traj;
-    traj.nb_points=t_max/PasTemps;
+    traj.nb_points=(int)(t_max/PasTemps);
+    traj.nb_planetes = nb_planetes;
+    traj.systeme_solaire = malloc(nb_planetes * sizeof(planete));
     
     for(int i=0;i<nb_planetes;i++){
         traj.systeme_solaire[i]=systeme_solaire[i];
@@ -99,6 +103,7 @@ traj_systeme_solaire euler_asym_traj_systeme_solaire(planete systeme_solaire[4],
             for(int j=0;j<nb_planetes;j++){
                 traj.systeme_solaire[j].pos_vit=traj.tab_points[j][i];
             }
+            afficher_barre_chargement(i+1, traj.nb_points, "Euler Asym");
         }
     }
     return traj;

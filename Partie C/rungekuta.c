@@ -39,16 +39,17 @@ point rk4_suivant(point point_actuel, planete p_etudie, planete soleil) {
     return new_point;
 }
 
-trajectoire rk4_traj_planete(planete p, planete soleil, int t_max) {
+trajectoire rk4_traj_planete(planete p, planete soleil, double t_max) {
     trajectoire traj;
     traj.planete = p;
-    traj.nb_points = t_max / PasTemps;
+    traj.nb_points = (int)(t_max / PasTemps);
     traj.tab_points = malloc(traj.nb_points * sizeof(point));
     
     if (traj.nb_points > 0) {
         traj.tab_points[0] = p.pos_vit;
         for (int i = 1; i < traj.nb_points; i++) {
             traj.tab_points[i] = rk4_suivant(traj.tab_points[i-1], p, soleil);
+            afficher_barre_chargement(i+1, traj.nb_points, "Calcul RK4 1P");
         }
     }
     return traj;
@@ -68,9 +69,11 @@ void export_json_rk4(trajectoire traj, char *nom_fichier){
 
 // ------ N-Corps ------
 
-traj_systeme_solaire rk4_traj_systeme_solaire(planete systeme_solaire[4], int nb_planetes, int t_max) {
+traj_systeme_solaire rk4_traj_systeme_solaire(planete *systeme_solaire, int nb_planetes, double t_max) {
     traj_systeme_solaire traj;
-    traj.nb_points = t_max / PasTemps;
+    traj.nb_points = (int)(t_max / PasTemps);
+    traj.nb_planetes = nb_planetes;
+    traj.systeme_solaire = malloc(nb_planetes * sizeof(planete));
     
     for(int i=0;i<nb_planetes;i++){
         traj.systeme_solaire[i]=systeme_solaire[i];
@@ -87,11 +90,15 @@ traj_systeme_solaire rk4_traj_systeme_solaire(planete systeme_solaire[4], int nb
         }
         
         // Tableaux pour stocker les k
-        vect k1r[4], k1v[4];
-        vect k2r[4], k2v[4];
-        vect k3r[4], k3v[4];
-        vect k4r[4], k4v[4];
-        planete sys_temp[4];
+        vect *k1r = malloc(nb_planetes * sizeof(vect));
+        vect *k1v = malloc(nb_planetes * sizeof(vect));
+        vect *k2r = malloc(nb_planetes * sizeof(vect));
+        vect *k2v = malloc(nb_planetes * sizeof(vect));
+        vect *k3r = malloc(nb_planetes * sizeof(vect));
+        vect *k3v = malloc(nb_planetes * sizeof(vect));
+        vect *k4r = malloc(nb_planetes * sizeof(vect));
+        vect *k4v = malloc(nb_planetes * sizeof(vect));
+        planete *sys_temp = malloc(nb_planetes * sizeof(planete));
         
         for (int i = 1; i < traj.nb_points; i++) {
             
@@ -161,7 +168,13 @@ traj_systeme_solaire rk4_traj_systeme_solaire(planete systeme_solaire[4], int nb
                 traj.systeme_solaire[j].pos_vit.ec = traj.tab_points[j][i].ec;
                 traj.systeme_solaire[j].pos_vit.et = traj.tab_points[j][i].et;
             }
+            afficher_barre_chargement(i+1, traj.nb_points, "Calcul RK4");
         }
+        free(k1r); free(k1v);
+        free(k2r); free(k2v);
+        free(k3r); free(k3v);
+        free(k4r); free(k4v);
+        free(sys_temp);
     }
     return traj;
 }

@@ -75,7 +75,7 @@ vect gravitation(planete p1, planete p2){
 vect acceleration(planete p1, planete p2){
     return div_scalaire(gravitation(p1, p2), p1.masse);
 }
-vect acceleration_n_corps(int index_p, planete systeme_solaire[4], int nb_planetes){
+vect acceleration_n_corps(int index_p, planete *systeme_solaire, int nb_planetes){
     vect a=vect_creer(0,0,0);
     planete p = systeme_solaire[index_p];
     for(int i=0;i<nb_planetes;i++){
@@ -93,7 +93,7 @@ vect calcul_vitesse_future(point p1, vect acceleration){
     return new_vitesse;
 }
 
-vect calcul_vitesse_future_n_corps(point p1, int index_p, planete systeme_solaire[4], int nb_planetes){
+vect calcul_vitesse_future_n_corps(point p1, int index_p, planete *systeme_solaire, int nb_planetes){
     vect a=acceleration_n_corps(index_p,systeme_solaire,nb_planetes);
     return calcul_vitesse_future(p1,a);
 }
@@ -103,7 +103,7 @@ vect calcul_position_future(point p1, vect vitesse){
     return new_position;
 }
 
-vect calcul_position_future_n_corps(point p1, int index_p, planete systeme_solaire[4], int nb_planetes){
+vect calcul_position_future_n_corps(point p1, int index_p, planete *systeme_solaire, int nb_planetes){
     vect v=calcul_vitesse_future_n_corps(p1,index_p,systeme_solaire,nb_planetes);
     return calcul_position_future(p1,v);
 }
@@ -114,7 +114,7 @@ double p_energie(planete p, planete soleil,point point){
     double denominateur=distance(point.pos, soleil.pos_vit.pos);
     return numerateur/denominateur;
 }
-double p_energie_n_corps(int index_p, planete systeme_solaire[4], int nb_planetes){
+double p_energie_n_corps(int index_p, planete *systeme_solaire, int nb_planetes){
     double result=0;
     planete p = systeme_solaire[index_p];
     for(int i=0;i<nb_planetes;i++){
@@ -129,7 +129,7 @@ double c_energie(planete p,point point){
     double result=0.5*p.masse*(point.vit.x*point.vit.x+point.vit.y*point.vit.y+point.vit.z*point.vit.z);
     return result;
 }
-double c_energie_n_corps(int index_p, planete systeme_solaire[4], int nb_planetes){
+double c_energie_n_corps(int index_p, planete *systeme_solaire, int nb_planetes){
     double result=0;
     planete p = systeme_solaire[index_p];
     for(int i=0;i<nb_planetes;i++){
@@ -144,7 +144,7 @@ double t_energie(planete p, planete soleil,point point){
     double result=p_energie(p,soleil,point)+c_energie(p,point);
     return result;
 }
-double t_energie_n_corps(int index_p, planete systeme_solaire[4], int nb_planetes){
+double t_energie_n_corps(int index_p, planete *systeme_solaire, int nb_planetes){
     double result=0;
     planete p = systeme_solaire[index_p];
     for(int i=0;i<nb_planetes;i++){
@@ -162,6 +162,27 @@ void afficher_vect(vect v){
     printf("(%f, %f, %f)\n", v.x, v.y, v.z);
 }
 
+void afficher_barre_chargement(int actuel, int total, const char* prefixe) {
+    if (total <= 0) return;
+    int mod = total / 10;
+    if (mod == 0) mod = 1;
+    if (actuel % mod == 0 || actuel == total) {
+        int pourcentage = (actuel * 100) / total;
+        int nb_barres = (pourcentage * 50) / 100;
+        printf("\r%-15s [", prefixe);
+        for(int i = 0; i < 50; i++) {
+            if(i < nb_barres) printf("=");
+            else if(i == nb_barres) printf(">");
+            else printf(" ");
+        }
+        printf("] %3d%%", pourcentage);
+        fflush(stdout);
+        if (actuel == total) {
+            printf("\n");
+        }
+    }
+}
+
 //Export en json que pour euler
 void export_json_euler(trajectoire traj, char *nom_fichier){
     FILE *fichier = fopen(nom_fichier, "w");
@@ -173,17 +194,17 @@ void export_json_euler(trajectoire traj, char *nom_fichier){
     for(int i=0;i<traj.nb_points;i++){
         fprintf(fichier,"[");
         //Print position
-        fprintf(fichier,"[%f,%f,%f],",traj.tab_points[i].pos.x,traj.tab_points[i].pos.y,traj.tab_points[i].pos.z);
+        fprintf(fichier,"[%e,%e,%e],",traj.tab_points[i].pos.x,traj.tab_points[i].pos.y,traj.tab_points[i].pos.z);
         //Print vitesse
-        fprintf(fichier,"[%f,%f,%f],",traj.tab_points[i].vit.x,traj.tab_points[i].vit.y,traj.tab_points[i].vit.z);
+        fprintf(fichier,"[%e,%e,%e],",traj.tab_points[i].vit.x,traj.tab_points[i].vit.y,traj.tab_points[i].vit.z);
         //Print temps
-        fprintf(fichier,"%d",traj.tab_points[i].temps);
+        fprintf(fichier,"%e",traj.tab_points[i].temps);
         //Print energie cinetique
-        fprintf(fichier,",%f",traj.tab_points[i].ec);
+        fprintf(fichier,",%e",traj.tab_points[i].ec);
         //Print energie potentielle
-        fprintf(fichier,",%f",traj.tab_points[i].ep);
+        fprintf(fichier,",%e",traj.tab_points[i].ep);
         //Print energie totale
-        fprintf(fichier,",%f",traj.tab_points[i].et);
+        fprintf(fichier,",%e",traj.tab_points[i].et);
         fprintf(fichier,"]\n");
         if(i < traj.nb_points - 1) {
             fprintf(fichier,",");
@@ -198,40 +219,51 @@ void export_json_euler(trajectoire traj, char *nom_fichier){
 void ecrire_points_json(FILE *fichier, trajectoire traj){
     for(int i=0; i<traj.nb_points; i++){
         fprintf(fichier,"[");
-        fprintf(fichier,"[%f,%f,%f],",traj.tab_points[i].pos.x,traj.tab_points[i].pos.y,traj.tab_points[i].pos.z);
-        fprintf(fichier,"[%f,%f,%f],",traj.tab_points[i].vit.x,traj.tab_points[i].vit.y,traj.tab_points[i].vit.z);
-        fprintf(fichier,"%d",traj.tab_points[i].temps);
-        fprintf(fichier,",%f",traj.tab_points[i].ec);
-        fprintf(fichier,",%f",traj.tab_points[i].ep);
-        fprintf(fichier,",%f",traj.tab_points[i].et);
+        fprintf(fichier,"[%e,%e,%e],",traj.tab_points[i].pos.x,traj.tab_points[i].pos.y,traj.tab_points[i].pos.z);
+        fprintf(fichier,"[%e,%e,%e],",traj.tab_points[i].vit.x,traj.tab_points[i].vit.y,traj.tab_points[i].vit.z);
+        fprintf(fichier,"%e",traj.tab_points[i].temps);
+        fprintf(fichier,",%e",traj.tab_points[i].ec);
+        fprintf(fichier,",%e",traj.tab_points[i].ep);
+        fprintf(fichier,",%e",traj.tab_points[i].et);
         fprintf(fichier,"]\n");
         if(i < traj.nb_points - 1) {
             fprintf(fichier,",");
         }
+        afficher_barre_chargement(i+1, traj.nb_points, "Export JSON");
     }
 }
 
 void ecrire_systeme_json(FILE *fichier, traj_systeme_solaire traj, char *methode, int is_last_method){
     int last_valid_p = -1;
-    for(int p=0; p<4; p++){
-        if(traj.systeme_solaire[p].masse > 0) last_valid_p = p;
+    int total_points = 0;
+    for(int p=0; p<traj.nb_planetes; p++){
+        if(traj.systeme_solaire[p].masse > 0) {
+            last_valid_p = p;
+            total_points += traj.nb_points;
+        }
     }
 
-    for(int p=0; p<4; p++){
+    int current_point = 0;
+    char prefix_str[30];
+    sprintf(prefix_str, "Export %s", methode);
+
+    for(int p=0; p<traj.nb_planetes; p++){
         if(traj.systeme_solaire[p].masse > 0) {
             fprintf(fichier,"\"%s - %s\" : [\n", traj.systeme_solaire[p].nom, methode);
             for(int i=0; i<traj.nb_points; i++){
                 fprintf(fichier,"[");
-                fprintf(fichier,"[%f,%f,%f],",traj.tab_points[p][i].pos.x,traj.tab_points[p][i].pos.y,traj.tab_points[p][i].pos.z);
-                fprintf(fichier,"[%f,%f,%f],",traj.tab_points[p][i].vit.x,traj.tab_points[p][i].vit.y,traj.tab_points[p][i].vit.z);
-                fprintf(fichier,"%d",traj.tab_points[p][i].temps);
-                fprintf(fichier,",%f",traj.tab_points[p][i].ec);
-                fprintf(fichier,",%f",traj.tab_points[p][i].ep);
-                fprintf(fichier,",%f",traj.tab_points[p][i].et);
+                fprintf(fichier,"[%e,%e,%e],",traj.tab_points[p][i].pos.x,traj.tab_points[p][i].pos.y,traj.tab_points[p][i].pos.z);
+                fprintf(fichier,"[%e,%e,%e],",traj.tab_points[p][i].vit.x,traj.tab_points[p][i].vit.y,traj.tab_points[p][i].vit.z);
+                fprintf(fichier,"%e",traj.tab_points[p][i].temps);
+                fprintf(fichier,",%e",traj.tab_points[p][i].ec);
+                fprintf(fichier,",%e",traj.tab_points[p][i].ep);
+                fprintf(fichier,",%e",traj.tab_points[p][i].et);
                 fprintf(fichier,"]\n");
                 if(i < traj.nb_points - 1) {
                     fprintf(fichier,",");
                 }
+                current_point++;
+                afficher_barre_chargement(current_point, total_points, prefix_str);
             }
             fprintf(fichier,"]\n");
             if(p != last_valid_p || !is_last_method) {
