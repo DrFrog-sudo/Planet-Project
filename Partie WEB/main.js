@@ -199,12 +199,6 @@ function draw() {
 
     updateCamera();
 
-    noLights();
-    drawSoleil(zoom);
-
-    ambientLight(35, 35, 45);
-    pointLight(255, 255, 255, 0, 0, 0);
-
     updateAndDrawPlanets(zoom);
     drawGraphs();
 }
@@ -285,7 +279,7 @@ function updateAndDrawPlanets(zoom) {
 
     let methodSuffix = selectedMethod.includes(" - ") ? selectedMethod.split(" - ")[1] : selectedMethod;
 
-    let pMercure, pVenus, pTerre, pMars, pJupiter, pSaturn, pUranus, pNeptune, pHalley, pMoon;
+    let pSoleil, pMercure, pVenus, pTerre, pMars, pJupiter, pSaturn, pUranus, pNeptune, pHalley, pMoon;
     let baseData = data[selectedMethod] || data[methodSuffix];
 
     if (baseData && Array.isArray(baseData) && baseData[0] && baseData[0].length > 6) {
@@ -293,6 +287,7 @@ function updateAndDrawPlanets(zoom) {
         let step = floor(sliderSpeed.value());
         frameIndex = (frameIndex + step) % totalSteps;
 
+        pSoleil = baseData[0] ? baseData[0][frameIndex] : null;
         pMercure = baseData[1] ? baseData[1][frameIndex] : null;
         pVenus = baseData[2] ? baseData[2][frameIndex] : null;
         pTerre = baseData[3] ? baseData[3][frameIndex] : null;
@@ -304,6 +299,7 @@ function updateAndDrawPlanets(zoom) {
         pHalley = baseData[9] ? baseData[9][frameIndex] : null;
         pMoon = baseData[10] ? baseData[10][frameIndex] : null;
     } else {
+        let dataSoleil = data["Soleil - " + methodSuffix] || data["Soleil - Euler"];
         let dataMercury = data["Mercure - " + methodSuffix] || data["Mercure - Euler"];
         let dataVenus = data["Venus - " + methodSuffix] || data["Venus - Euler"];
         let dataEarth = data["Terre - " + methodSuffix] || data["Terre - Euler"];
@@ -321,6 +317,7 @@ function updateAndDrawPlanets(zoom) {
         let step = floor(sliderSpeed.value());
         frameIndex = (frameIndex + step) % totalSteps;
 
+        pSoleil = dataSoleil ? dataSoleil[frameIndex] : null;
         pMercure = dataMercury ? dataMercury[frameIndex] : null;
         pVenus = dataVenus ? dataVenus[frameIndex] : null;
         pTerre = dataEarth[frameIndex];
@@ -332,6 +329,18 @@ function updateAndDrawPlanets(zoom) {
         pHalley = dataHalley ? dataHalley[frameIndex] : null;
         pMoon = dataMoon ? dataMoon[frameIndex] : null;
     }
+
+    if (pSoleil) {
+        sunRawX = (pSoleil[0][0] / AU_METERS) * DISPLAY_SCALE;
+        sunRawY = (pSoleil[0][1] / AU_METERS) * DISPLAY_SCALE;
+        sunRawZ = (pSoleil[0][2] / AU_METERS) * DISPLAY_SCALE;
+    }
+
+    noLights();
+    drawSoleil(sunRawX * zoom, sunRawY * zoom, sunRawZ * zoom, zoom);
+
+    ambientLight(35, 35, 45);
+    pointLight(255, 255, 255, sunRawX * zoom, sunRawY * zoom, sunRawZ * zoom);
 
     if (pMercure) {
         mercuryRawX = (pMercure[0][0] / AU_METERS) * DISPLAY_SCALE;
@@ -412,9 +421,9 @@ function updateAndDrawPlanets(zoom) {
         let mx = (pMoon[0][0] / AU_METERS) * DISPLAY_SCALE;
         let my = (pMoon[0][1] / AU_METERS) * DISPLAY_SCALE;
         let mz = (pMoon[0][2] / AU_METERS) * DISPLAY_SCALE;
-        
+
         // Exagération artificielle de la distance pour éviter que la lune soit cachée DANS la Terre
-        let factor = 60; 
+        let factor = 60;
         moonRawX = earthRawX + (mx - earthRawX) * factor;
         moonRawY = earthRawY + (my - earthRawY) * factor;
         moonRawZ = earthRawZ + (mz - earthRawZ) * factor;

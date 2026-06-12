@@ -7,7 +7,7 @@ point point_suivant(point point_actuel, planete p_etudie, planete soleil){
     p_etudie.pos_vit = point_actuel;
     vect a=acceleration(p_etudie,soleil);
     vect new_vit=calcul_vitesse_future(point_actuel,a);
-    vect new_pos=calcul_position_future(point_actuel,new_vit);
+    vect new_pos=calcul_position_future(point_actuel,point_actuel.vit);
     point new_point;
     new_point.pos=new_pos;
     new_point.vit=new_vit;
@@ -21,7 +21,7 @@ point point_suivant(point point_actuel, planete p_etudie, planete soleil){
 point point_suivant_n_corps(point point_actuel, int index_p, planete *systeme_solaire, int nb_planetes){
     vect a=acceleration_n_corps(index_p,systeme_solaire,nb_planetes);
     vect new_vit=calcul_vitesse_future(point_actuel,a);
-    vect new_pos=calcul_position_future(point_actuel,new_vit);
+    vect new_pos=calcul_position_future(point_actuel,point_actuel.vit);
     point new_point;
     new_point.pos=new_pos;
     new_point.vit=new_vit;
