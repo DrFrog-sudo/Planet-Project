@@ -9,6 +9,9 @@ const AU_METERS = 149.597e9;
 const DISPLAY_SCALE = 80;
 const JSON_SAMPLE_STRIDE = 10;
 
+let stars = [];
+const STAR_COUNT = 5000;
+
 let rawData;
 let data;
 let frameIndex = 0;

@@ -33,6 +33,15 @@ function setup() {
     createCanvas(W, H, WEBGL);
     document.addEventListener('contextmenu', e => e.preventDefault());
 
+    for (let i = 0; i < STAR_COUNT; i++) {
+    stars.push({
+        x: random(-6000, 6000),
+        y: random(-6000, 6000),
+        z: random(-6000, 6000),
+        b: random(100, 255)
+    });
+    }
+
     panel = createDiv('');
     panel.position(5, 5);
     applyStyles(panel, {
@@ -151,10 +160,24 @@ function updateCamera() {
     camera(ex, ey, ez, camPanX, camPanY, camTargetZ, 0, 1, 0);
 }
 
+
+function drawSpaceBackground() {
+    push();
+    stroke(255);
+    strokeWeight(2);
+    beginShape(POINTS);
+    for (let star of stars) {
+        vertex(star.x, star.y, star.z);
+    }
+    endShape();
+    pop();
+}
+
 function draw() {
-    background(5, 5, 12);
-    const zoom = constrain(1000 / camRadius, 0.3, 4);
+    background(0);
     updateCamera();
+    drawSpaceBackground();
+    const zoom = constrain(1000 / camRadius, 0.3, 4);
     updateAndDrawPlanets(zoom);
     drawGraphs();
 }
@@ -215,6 +238,7 @@ function drawSoleil(zoom) {
     }
     sphere(30 * SIZE_FACTOR * zoom);
     pop();
+    drawSpaceBackground();
 }
 
 function updateAndDrawPlanets(zoom) {
