@@ -6,8 +6,15 @@ const PLANET_SIZES = { Mercure: 4, Venus: 6, Terre: 7, Mars: 5, Jupiter: 10, Sat
 
 let images = {};
 let planets = {};
+
 for (let name in PLANET_SIZES) {
-    planets[name] = { size: PLANET_SIZES[name], raw: { x: 0, y: 0, z: 0 }, trail: [] };
+    planets[name] = { 
+        size: PLANET_SIZES[name], 
+        raw: { x: 0, y: 0, z: 0 }, 
+        trail: new Array(TRAIL_LENGTH),
+        trailPointer: 0,
+        trailCount: 0 
+    };
 }
 
 function preload() {
@@ -131,12 +138,15 @@ function setup() {
         selectedMethod = methodKeys.length ? methodKeys[0] : '';
         methodSelect.selected(selectedMethod);
     }
-
     methodSelect.changed(() => {
         selectedMethod = methodSelect.value();
         frameIndex = 0;
         energyHistory = [];
-        for (let name in planets) planets[name].trail = [];
+        for (let name in planets) {
+            planets[name].trail = new Array(TRAIL_LENGTH);
+            planets[name].trailPointer = 0;
+            planets[name].trailCount = 0;
+        }
     });
 
     planetSelect.changed(() => {
@@ -311,11 +321,10 @@ function updateAndDrawPlanets(zoom) {
         p.raw.x = x;
         p.raw.y = y;
         p.raw.z = z;
-
-        p.trail.push({ x, y, z });
-        if (p.trail.length > TRAIL_LENGTH) p.trail.shift();
-
-        drawPlanet(x * zoom, y * zoom, z * zoom, p.size * SIZE_FACTOR * zoom, images[name], p.trail, zoom, name === selectedPlanet);
+        p.trail[p.trailPointer] = { x, y, z };
+        p.trailPointer = (p.trailPointer + 1) % TRAIL_LENGTH;
+        if (p.trailCount < TRAIL_LENGTH) p.trailCount++;
+        drawPlanet(x * zoom, y * zoom, z * zoom, p.size * SIZE_FACTOR * zoom, images[name], p, zoom, name === selectedPlanet);
 
         if (name === 'Terre') {
             let timeSec = pData[2];
@@ -335,13 +344,18 @@ function updateAndDrawPlanets(zoom) {
     }
 }
 
-function drawPlanet(x, y, z, size, img, trail, zoom, isSelected) {
+function drawPlanet(x, y, z, size, img, planetObj, zoom, isSelected) {
     push();
     noFill();
     stroke(100, 150, 255, 60);
     strokeWeight(1);
     beginShape();
-    for (let pt of trail) vertex(pt.x * zoom, pt.y * zoom, pt.z * zoom);
+    for (let i = 0; i < planetObj.trailCount; i++) {
+        let idx = (planetObj.trailPointer - planetObj.trailCount + i + TRAIL_LENGTH) % TRAIL_LENGTH;
+        let pt = planetObj.trail[idx];
+        if (pt) vertex(pt.x * zoom, pt.y * zoom, pt.z * zoom);
+    }
+    
     endShape();
     pop();
 
