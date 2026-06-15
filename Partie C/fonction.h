@@ -5,8 +5,8 @@
 
 #define PasTemps (3600.0*4.0) // En seconde
 #define G 6.67430e-11 // Constante gravitation
-#define nb_annee 360 // nombre d'année à simuler
-#define COEF_REDUCTION_JSON 10
+#define nb_annee 160 // nombre d'année à simuler
+#define COEF_REDUCTION_JSON 6
 typedef struct vect{
     double x;
     double y;
