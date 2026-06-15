@@ -150,9 +150,18 @@ function updateCamera() {
         ? { x: camPanX, y: camPanY, z: camTargetZ }
         : planets[selectedPlanet].raw;
 
-    camPanX = lerp(camPanX, target.x, 0.12);
-    camPanY = lerp(camPanY, target.y, 0.12);
-    camTargetZ = lerp(camTargetZ, target.z, 0.12);
+    if (selectedPlanet !== 'Soleil' && planets[selectedPlanet]) {
+        let shift = camRadius * 202 / H;
+        target = {
+            x: target.x - cos(camTheta) * shift,
+            y: target.y,
+            z: target.z + sin(camTheta) * shift
+        };
+    }
+
+    camPanX = lerp(camPanX, target.x, 0.18);
+    camPanY = lerp(camPanY, target.y, 0.18);
+    camTargetZ = lerp(camTargetZ, target.z, 0.18);
 
     let ex = camPanX + camRadius * sin(camTheta) * cos(camPhi);
     let ey = camPanY - camRadius * sin(camPhi);
@@ -164,7 +173,7 @@ function updateCamera() {
 function drawSpaceBackground() {
     push();
     stroke(255);
-    strokeWeight(2);
+    strokeWeight(0.01);
     beginShape(POINTS);
     for (let star of stars) {
         vertex(star.x, star.y, star.z);
@@ -229,7 +238,7 @@ function mousePressed() {
 
 function drawSoleil(zoom) {
     push();
-    translate(0, 0, 0);
+    translate(sunRawX * zoom, sunRawY * zoom, sunRawZ * zoom);
     noStroke();
     if (images.Soleil && images.Soleil.width > 0) {
         texture(images.Soleil);
@@ -238,8 +247,8 @@ function drawSoleil(zoom) {
     }
     sphere(30 * SIZE_FACTOR * zoom);
     pop();
-    drawSpaceBackground();
 }
+
 
 function updateAndDrawPlanets(zoom) {
     if (!data || !selectedMethod) return;
@@ -306,7 +315,7 @@ function updateAndDrawPlanets(zoom) {
         p.trail.push({ x, y, z });
         if (p.trail.length > TRAIL_LENGTH) p.trail.shift();
 
-        drawPlanet(x * zoom, y * zoom, z * zoom, p.size * SIZE_FACTOR * zoom, images[name], p.trail, zoom);
+        drawPlanet(x * zoom, y * zoom, z * zoom, p.size * SIZE_FACTOR * zoom, images[name], p.trail, zoom, name === selectedPlanet);
 
         if (name === 'Terre') {
             let timeSec = pData[2];
@@ -326,7 +335,7 @@ function updateAndDrawPlanets(zoom) {
     }
 }
 
-function drawPlanet(x, y, z, size, img, trail, zoom) {
+function drawPlanet(x, y, z, size, img, trail, zoom, isSelected) {
     push();
     noFill();
     stroke(100, 150, 255, 60);
@@ -338,6 +347,26 @@ function drawPlanet(x, y, z, size, img, trail, zoom) {
 
     push();
     translate(x, y, z);
+
+    push();
+    rotateY(camTheta);
+    rotateX(camPhi);
+    noFill();
+    if (isSelected) {
+        stroke(255, 220, 80, 230);
+        strokeWeight(2.5);
+    } else {
+        stroke(120, 200, 255, 150);
+        strokeWeight(1.2);
+    }
+    let ringRadius = size * 1.6 + 4;
+    beginShape();
+    for (let a = 0; a <= TWO_PI; a += PI / 24) {
+        vertex(cos(a) * ringRadius, sin(a) * ringRadius, 0);
+    }
+    endShape(CLOSE);
+    pop();
+
     noStroke();
     ambientMaterial(255);
     if (img) texture(img); else fill(200);
