@@ -60,6 +60,22 @@ vect mul_vect(vect v1, vect v2){
     v3.z = v1.z * v2.z;
     return v3;
 }
+void vectorTest(){
+    printf("--- Debut du test des vecteurs ---\n");
+    vect v1 = vect_creer(1.0, 2.0, 3.0);
+    vect v2 = vect_creer(4.0, 5.0, 6.0);
+    
+    printf("v1 = "); afficher_vect(v1);
+    printf("v2 = "); afficher_vect(v2);
+    
+    vect v_add = add_vect(v1, v2);
+    printf("v1 + v2 = "); afficher_vect(v_add);
+    
+    vect v_mul = mul_scalaire(v1, 2.0);
+    printf("v1 * 2.0 = "); afficher_vect(v_mul);
+    
+    printf("--- Fin du test des vecteurs ---\n\n");
+}
 
 //Calcul Force
 

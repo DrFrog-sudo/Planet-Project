@@ -141,7 +141,15 @@ int main(){
     printf("2. Calculer la trajectoire de Runge-Kutta\n");
     printf("3. Calculer la trajectoire d'Euler Asymétrique\n");
     printf("4. Calculer les 3 trajectoires\n");
+    printf("5. Faire les tests\n");
     scanf("%d",&traj_to_do);
+    
+    if (traj_to_do == 5) {
+        vectorTest();
+        free(systeme_solaire);
+        return 0;
+    }
+
     printf("Voulez-vous calculer pour\n");
     printf("1. La Terre\n");
     printf("2. Toutes les planètes\n");
