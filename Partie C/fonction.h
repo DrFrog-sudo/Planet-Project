@@ -7,6 +7,7 @@
 #define G 6.67430e-11 // Constante gravitation
 #define nb_annee 160 // nombre d'année à simuler
 #define COEF_REDUCTION_JSON 6
+
 typedef struct vect{
     double x;
     double y;
@@ -42,6 +43,7 @@ typedef struct traj_systeme_solaire{
 }traj_systeme_solaire;
 
 // Operation sur les vecteurs
+void vectorTest();
 vect vect_creer(double x, double y, double z);
 vect opposer_vect(vect v);
 vect add_vect(vect v1, vect v2);
