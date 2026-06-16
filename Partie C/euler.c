@@ -5,9 +5,11 @@
 
 point point_suivant(point point_actuel, planete p_etudie, planete soleil){
     p_etudie.pos_vit = point_actuel;
+    //Algorithme euler
     vect a=acceleration(p_etudie,soleil);
     vect new_vit=calcul_vitesse_future(point_actuel,a);
     vect new_pos=calcul_position_future(point_actuel,point_actuel.vit);
+    //Sauvegarde dans un nouveau point
     point new_point;
     new_point.pos=new_pos;
     new_point.vit=new_vit;
@@ -19,6 +21,7 @@ point point_suivant(point point_actuel, planete p_etudie, planete soleil){
 }
 
 point point_suivant_n_corps(point point_actuel, int index_p, planete *systeme_solaire, int nb_planetes){
+    //Tres similaire a au dessus juste on calcul l'accel differement
     vect a=acceleration_n_corps(index_p,systeme_solaire,nb_planetes);
     vect new_vit=calcul_vitesse_future(point_actuel,a);
     vect new_pos=calcul_position_future(point_actuel,point_actuel.vit);
@@ -39,6 +42,7 @@ trajectoire euler_traj_planete(planete p, planete soleil, double t_max){
     traj.tab_points=malloc(traj.nb_points*sizeof(point));
     if (traj.nb_points > 0) {
         traj.tab_points[0]=p.pos_vit;
+        //Calcul de chaque point par pas de temps
         for(int i=1;i<traj.nb_points;i++){
             traj.tab_points[i]=point_suivant(traj.tab_points[i-1],p,soleil);
             afficher_barre_chargement(i+1, traj.nb_points, "Euler 1P");

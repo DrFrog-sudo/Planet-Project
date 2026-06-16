@@ -106,6 +106,8 @@ void ecrire_systeme_json(FILE *fichier, traj_systeme_solaire traj, char *methode
 
 
 // Misc
+void liberer_traj(trajectoire traj);
+void liberer_traj_systeme(traj_systeme_solaire traj);
 double valeur_absolue(double x);
 double distance(vect v1, vect v2);
 
