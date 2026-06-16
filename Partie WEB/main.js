@@ -6,8 +6,15 @@ const PLANET_SIZES = { Mercure: 4, Venus: 6, Terre: 7, Mars: 5, Jupiter: 10, Sat
 
 let images = {};
 let planets = {};
+
 for (let name in PLANET_SIZES) {
-    planets[name] = { size: PLANET_SIZES[name], raw: { x: 0, y: 0, z: 0 }, trail: [] };
+    planets[name] = { 
+        size: PLANET_SIZES[name], 
+        raw: { x: 0, y: 0, z: 0 }, 
+        trail: new Array(TRAIL_LENGTH),
+        trailPointer: 0,
+        trailCount: 0 
+    };
 }
 
 function preload() {
@@ -131,12 +138,15 @@ function setup() {
         selectedMethod = methodKeys.length ? methodKeys[0] : '';
         methodSelect.selected(selectedMethod);
     }
-
     methodSelect.changed(() => {
         selectedMethod = methodSelect.value();
         frameIndex = 0;
         energyHistory = [];
-        for (let name in planets) planets[name].trail = [];
+        for (let name in planets) {
+            planets[name].trail = new Array(TRAIL_LENGTH);
+            planets[name].trailPointer = 0;
+            planets[name].trailCount = 0;
+        }
     });
 
     planetSelect.changed(() => {
@@ -150,9 +160,18 @@ function updateCamera() {
         ? { x: camPanX, y: camPanY, z: camTargetZ }
         : planets[selectedPlanet].raw;
 
-    camPanX = lerp(camPanX, target.x, 0.12);
-    camPanY = lerp(camPanY, target.y, 0.12);
-    camTargetZ = lerp(camTargetZ, target.z, 0.12);
+    if (selectedPlanet !== 'Soleil' && planets[selectedPlanet]) {
+        let shift = camRadius * 202 / H;
+        target = {
+            x: target.x - cos(camTheta) * shift,
+            y: target.y,
+            z: target.z + sin(camTheta) * shift
+        };
+    }
+
+    camPanX = lerp(camPanX, target.x, 0.18);
+    camPanY = lerp(camPanY, target.y, 0.18);
+    camTargetZ = lerp(camTargetZ, target.z, 0.18);
 
     let ex = camPanX + camRadius * sin(camTheta) * cos(camPhi);
     let ey = camPanY - camRadius * sin(camPhi);
@@ -164,7 +183,7 @@ function updateCamera() {
 function drawSpaceBackground() {
     push();
     stroke(255);
-    strokeWeight(2);
+    strokeWeight(0.01);
     beginShape(POINTS);
     for (let star of stars) {
         vertex(star.x, star.y, star.z);
@@ -229,7 +248,7 @@ function mousePressed() {
 
 function drawSoleil(zoom) {
     push();
-    translate(0, 0, 0);
+    translate(sunRawX * zoom, sunRawY * zoom, sunRawZ * zoom);
     noStroke();
     if (images.Soleil && images.Soleil.width > 0) {
         texture(images.Soleil);
@@ -238,8 +257,8 @@ function drawSoleil(zoom) {
     }
     sphere(30 * SIZE_FACTOR * zoom);
     pop();
-    drawSpaceBackground();
 }
+
 
 function updateAndDrawPlanets(zoom) {
     if (!data || !selectedMethod) return;
@@ -302,11 +321,10 @@ function updateAndDrawPlanets(zoom) {
         p.raw.x = x;
         p.raw.y = y;
         p.raw.z = z;
-
-        p.trail.push({ x, y, z });
-        if (p.trail.length > TRAIL_LENGTH) p.trail.shift();
-
-        drawPlanet(x * zoom, y * zoom, z * zoom, p.size * SIZE_FACTOR * zoom, images[name], p.trail, zoom);
+        p.trail[p.trailPointer] = { x, y, z };
+        p.trailPointer = (p.trailPointer + 1) % TRAIL_LENGTH;
+        if (p.trailCount < TRAIL_LENGTH) p.trailCount++;
+        drawPlanet(x * zoom, y * zoom, z * zoom, p.size * SIZE_FACTOR * zoom, images[name], p, zoom, name === selectedPlanet);
 
         if (name === 'Terre') {
             let timeSec = pData[2];
@@ -326,18 +344,43 @@ function updateAndDrawPlanets(zoom) {
     }
 }
 
-function drawPlanet(x, y, z, size, img, trail, zoom) {
+function drawPlanet(x, y, z, size, img, planetObj, zoom, isSelected) {
     push();
     noFill();
     stroke(100, 150, 255, 60);
     strokeWeight(1);
     beginShape();
-    for (let pt of trail) vertex(pt.x * zoom, pt.y * zoom, pt.z * zoom);
+    for (let i = 0; i < planetObj.trailCount; i++) {
+        let idx = (planetObj.trailPointer - planetObj.trailCount + i + TRAIL_LENGTH) % TRAIL_LENGTH;
+        let pt = planetObj.trail[idx];
+        if (pt) vertex(pt.x * zoom, pt.y * zoom, pt.z * zoom);
+    }
+    
     endShape();
     pop();
 
     push();
     translate(x, y, z);
+
+    push();
+    rotateY(camTheta);
+    rotateX(camPhi);
+    noFill();
+    if (isSelected) {
+        stroke(255, 220, 80, 230);
+        strokeWeight(2.5);
+    } else {
+        stroke(120, 200, 255, 150);
+        strokeWeight(1.2);
+    }
+    let ringRadius = size * 1.6 + 4;
+    beginShape();
+    for (let a = 0; a <= TWO_PI; a += PI / 24) {
+        vertex(cos(a) * ringRadius, sin(a) * ringRadius, 0);
+    }
+    endShape(CLOSE);
+    pop();
+
     noStroke();
     ambientMaterial(255);
     if (img) texture(img); else fill(200);
