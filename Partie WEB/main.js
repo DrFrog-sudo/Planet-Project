@@ -1,7 +1,3 @@
-//Initialisation des tableaux pour le main
-let images = {};
-let planets = {};
-
 for (let name in PLANET_SIZES) {
     planets[name] = { 
         size: PLANET_SIZES[name], 

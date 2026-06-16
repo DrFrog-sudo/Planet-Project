@@ -83,3 +83,7 @@ let camRadius = 1000;
 let camPanX = 0;
 let camPanY = 0;
 let camTargetZ = 0;
+
+//Initialisation des tableaux pour le main
+let images = {};
+let planets = {};
