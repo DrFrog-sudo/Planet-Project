@@ -94,6 +94,7 @@ vect acceleration(planete p1, planete p2){
 vect acceleration_n_corps(int index_p, planete *systeme_solaire, int nb_planetes){
     vect a=vect_creer(0,0,0);
     planete p = systeme_solaire[index_p];
+    // Parcours planete et calcul acceleration par rapport a chaque
     for(int i=0;i<nb_planetes;i++){
         if(i!=index_p){
             a=add_vect(a,acceleration(p,systeme_solaire[i]));
@@ -146,14 +147,8 @@ double c_energie(planete p,point point){
     return result;
 }
 double c_energie_n_corps(int index_p, planete *systeme_solaire, int nb_planetes){
-    double result=0;
     planete p = systeme_solaire[index_p];
-    for(int i=0;i<nb_planetes;i++){
-        if(i!=index_p){
-            result+=c_energie(p,systeme_solaire[i].pos_vit);
-        }
-    }
-    return result;
+    return c_energie(p, p.pos_vit);
 }
 
 double t_energie(planete p, planete soleil,point point){
@@ -161,14 +156,7 @@ double t_energie(planete p, planete soleil,point point){
     return result;
 }
 double t_energie_n_corps(int index_p, planete *systeme_solaire, int nb_planetes){
-    double result=0;
-    planete p = systeme_solaire[index_p];
-    for(int i=0;i<nb_planetes;i++){
-        if(i!=index_p){
-            result+=t_energie(p,systeme_solaire[i],p.pos_vit);
-        }
-    }
-    return result;
+    return p_energie_n_corps(index_p, systeme_solaire, nb_planetes) + c_energie_n_corps(index_p, systeme_solaire, nb_planetes);
 }
 
 
@@ -178,6 +166,7 @@ void afficher_vect(vect v){
     printf("(%f, %f, %f)\n", v.x, v.y, v.z);
 }
 
+//Barre de chargement
 void afficher_barre_chargement(int actuel, int total, const char* prefixe) {
     if (total <= 0) return;
     int mod = total / 10;
@@ -259,6 +248,7 @@ void ecrire_points_json(FILE *fichier, trajectoire traj){
     }
 }
 
+//Fonction qui ecrit systeme
 void ecrire_systeme_json(FILE *fichier, traj_systeme_solaire traj, char *methode, int is_last_method){
     int last_valid_p = -1;
     int total_points = 0;
@@ -308,6 +298,7 @@ void ecrire_systeme_json(FILE *fichier, traj_systeme_solaire traj, char *methode
     }
 }
 
+//Export en json du systeme solaire avec euler
 void export_json_euler_systeme_solaire(traj_systeme_solaire traj, char *nom_fichier){
     FILE *fichier = fopen(nom_fichier, "w");
     if (fichier == NULL){
@@ -335,7 +326,25 @@ double distance(vect v1, vect v2){
     return sqrt(dx*dx + dy*dy + dz*dz);
 }
 
+void liberer_traj(trajectoire traj) {
+    if (traj.tab_points != NULL) {
+        free(traj.tab_points);
+    }
+}
 
+void liberer_traj_systeme(traj_systeme_solaire traj) {
+    if (traj.tab_points != NULL) {
+        for (int i = 0; i < traj.nb_planetes; i++) {
+            if (traj.tab_points[i] != NULL) {
+                free(traj.tab_points[i]);
+            }
+        }
+        free(traj.tab_points);
+    }
+    if (traj.systeme_solaire != NULL) {
+        free(traj.systeme_solaire);
+    }
+}
 
 
 

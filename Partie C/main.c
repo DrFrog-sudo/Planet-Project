@@ -154,15 +154,21 @@ int main(){
     printf("1. La Terre\n");
     printf("2. Toutes les planètes\n");
     scanf("%d",&planete_to_do);
+
+    //Selection planetes et methode de calcul
+    
     if(traj_to_do==1){
         if(planete_to_do==1){
         trajectoire traj_terre_euler = euler_traj_planete(terre, soleil, 365.0*24.0*3600.0*nb_annee);
         export_json_euler(traj_terre_euler, "terre.json");
-        printf("Traj euler calcule\n");}
+        printf("Traj euler calcule\n");
+        liberer_traj(traj_terre_euler);
+        }
         else{
             traj_systeme_solaire traj_systeme_solaire_euler = euler_traj_systeme_solaire(systeme_solaire, nb_planetes, 365.0*24.0*3600.0*nb_annee);
             export_json_euler_systeme_solaire(traj_systeme_solaire_euler, "systeme_solaire.json");
             printf("Traj euler calcule\n");
+            liberer_traj_systeme(traj_systeme_solaire_euler);
         }
     }
     if(traj_to_do==2){
@@ -170,11 +176,13 @@ int main(){
             trajectoire traj_terre_rk4 = rk4_traj_planete(terre, soleil, 365.0*24.0*3600.0*nb_annee);
             export_json_rk4(traj_terre_rk4, "terre.json");
             printf("Traj rk4 calcule\n");
+            liberer_traj(traj_terre_rk4);
         }
         else{
             traj_systeme_solaire traj_systeme_solaire_rk4 = rk4_traj_systeme_solaire(systeme_solaire, nb_planetes, 365.0*24.0*3600.0*nb_annee);
             export_json_rk4_systeme_solaire(traj_systeme_solaire_rk4, "systeme_solaire.json");
             printf("Traj rk4 calcule\n");
+            liberer_traj_systeme(traj_systeme_solaire_rk4);
         }
     }
     if(traj_to_do==3){
@@ -182,11 +190,13 @@ int main(){
             trajectoire traj_terre_euler_asym = euler_asym_traj_planete(terre, soleil, 365.0*24.0*3600.0*nb_annee);
             export_json_euler_asym(traj_terre_euler_asym, "terre.json");
             printf("Traj euler asym calcule\n");
+            liberer_traj(traj_terre_euler_asym);
         }
         else{
             traj_systeme_solaire traj_systeme_solaire_euler_asym = euler_asym_traj_systeme_solaire(systeme_solaire, nb_planetes, 365.0*24.0*3600.0*nb_annee);
             export_json_euler_asym_systeme_solaire(traj_systeme_solaire_euler_asym, "systeme_solaire.json");
             printf("Traj euler asym calcule\n");
+            liberer_traj_systeme(traj_systeme_solaire_euler_asym);
         }
     }
     if(traj_to_do==4){
@@ -217,6 +227,9 @@ int main(){
             fclose(fichier);
             printf("Euler puis RK4 puis Euler Asym ecrit dans terre.json\n");
             }
+            liberer_traj(traj_terre_euler);
+            liberer_traj(traj_terre_rk4);
+            liberer_traj(traj_terre_euler_asym);
         }
         else{
             traj_systeme_solaire traj_systeme_solaire_euler = euler_traj_systeme_solaire(systeme_solaire, nb_planetes, 365.0*24.0*3600.0*nb_annee);
@@ -242,6 +255,9 @@ int main(){
                 fclose(fichier);
                 printf("Fichier complet systeme_solaire.json genere.\n");
             }
+            liberer_traj_systeme(traj_systeme_solaire_euler);
+            liberer_traj_systeme(traj_systeme_solaire_rk4);
+            liberer_traj_systeme(traj_systeme_solaire_euler_asym);
         }
 
     }

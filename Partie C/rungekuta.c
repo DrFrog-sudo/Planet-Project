@@ -75,16 +75,19 @@ traj_systeme_solaire rk4_traj_systeme_solaire(planete *systeme_solaire, int nb_p
     traj.nb_planetes = nb_planetes;
     traj.systeme_solaire = malloc(nb_planetes * sizeof(planete));
     
+    //Copie systeme solaire
     for(int i=0;i<nb_planetes;i++){
         traj.systeme_solaire[i]=systeme_solaire[i];
     }
     
+    //Definition tableau
     traj.tab_points = malloc(nb_planetes * sizeof(point*));
     for(int i=0;i<nb_planetes;i++){
         traj.tab_points[i] = malloc(traj.nb_points * sizeof(point));
     }
     
     if (traj.nb_points > 0) {
+        //Etat init
         for(int i=0;i<nb_planetes;i++){
             traj.tab_points[i][0] = systeme_solaire[i].pos_vit;
         }
@@ -100,6 +103,7 @@ traj_systeme_solaire rk4_traj_systeme_solaire(planete *systeme_solaire, int nb_p
         vect *k4v = malloc(nb_planetes * sizeof(vect));
         planete *sys_temp = malloc(nb_planetes * sizeof(planete));
         
+        //Parcours temp
         for (int i = 1; i < traj.nb_points; i++) {
             
             // --- K1 ---
