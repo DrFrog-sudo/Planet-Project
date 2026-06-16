@@ -1,9 +1,4 @@
-const SIZE_FACTOR = DISPLAY_SCALE / 149.597;
-
-const BODY_NAMES = ['Soleil', 'Mercure', 'Venus', 'Terre', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Halley', 'Lune'];
-const ALT_NAMES = { Saturn: 'Saturne', Lune: 'Moon' };
-const PLANET_SIZES = { Mercure: 4, Venus: 6, Terre: 7, Mars: 5, Jupiter: 10, Saturn: 9, Uranus: 8, Neptune: 7, Halley: 1, Lune: 2 };
-
+//Initialisation des tableaux pour le main
 let images = {};
 let planets = {};
 
@@ -17,6 +12,10 @@ for (let name in PLANET_SIZES) {
     };
 }
 
+/**
+ * @name preload
+ * @description Preload function to load JSON data and images before the start.
+ */
 function preload() {
     data = loadJSON('systeme_solaire.json');
     images.Soleil = loadImage('sunTexture.jpg');
@@ -32,10 +31,20 @@ function preload() {
     images.Lune = loadImage('moon.jpg');
 }
 
+/**
+ * @name applyStyles
+ * @description Apply a set of CSS styles to an element.
+ * @param el - The element to style.
+ * @param styles - The styles to apply.
+ */
 function applyStyles(el, styles) {
     for (let prop in styles) el.style(prop, styles[prop]);
 }
 
+/**
+ * @name setup
+ * @description Setup function to initialize the sketch.
+ */
 function setup() {
     createCanvas(W, H, WEBGL);
     document.addEventListener('contextmenu', e => e.preventDefault());
@@ -155,6 +164,10 @@ function setup() {
     });
 }
 
+/**
+ * @name updateCamera
+ * @description Update the camera position and orientation based on the selected planet and user interactions.
+ */
 function updateCamera() {
     let target = (selectedPlanet === 'Soleil' || !planets[selectedPlanet])
         ? { x: camPanX, y: camPanY, z: camTargetZ }
@@ -180,6 +193,10 @@ function updateCamera() {
 }
 
 
+/**
+ * @name drawSpaceBackground
+ * @description Draw the space background with stars.
+ */
 function drawSpaceBackground() {
     push();
     stroke(255);
@@ -192,6 +209,10 @@ function drawSpaceBackground() {
     pop();
 }
 
+/**
+ * @name draw
+ * @description Main draw loop to render the scene.
+ */
 function draw() {
     background(0);
     updateCamera();
@@ -200,7 +221,10 @@ function draw() {
     updateAndDrawPlanets(zoom);
     drawGraphs();
 }
-
+/**
+ * @name mouseDragged
+ * @description Handle mouse drag events for camera control.
+ */
 function mouseDragged() {
     if (mouseX < 350) return;
     let dx = mouseX - pmouseX;
@@ -217,12 +241,20 @@ function mouseDragged() {
     }
 }
 
+/**
+ * @name mouseWheel
+ * @description Handle mouse wheel events for zoom
+ */
 function mouseWheel(event) {
     if (mouseX < 350) return false;
     camRadius = constrain(camRadius + event.delta, 50, 10000);
     return false;
 }
 
+/**
+ * @name mousePressed
+ * @description Handle mouse press events for planet selection.
+ */
 function mousePressed() {
     if (mouseX < 350 || mouseButton !== LEFT) return;
 
@@ -246,6 +278,11 @@ function mousePressed() {
     }
 }
 
+/**
+ * @name drawSoleil
+ * @description Draw the Sun at its current position.
+ * @param zoom - The zoom factor for scaling the Sun's size and position.
+ */
 function drawSoleil(zoom) {
     push();
     translate(sunRawX * zoom, sunRawY * zoom, sunRawZ * zoom);
@@ -259,7 +296,11 @@ function drawSoleil(zoom) {
     pop();
 }
 
-
+/**
+ * name updateAndDrawPlanets
+ * @description Update the positions of the planets based on the current frame and draw them.
+ * @param zoom - The zoom factor for scaling the planets sizes and positions.
+ */
 function updateAndDrawPlanets(zoom) {
     if (!data || !selectedMethod) return;
 
@@ -344,6 +385,18 @@ function updateAndDrawPlanets(zoom) {
     }
 }
 
+/**
+ * @name drawPlanet
+ * @description Draw a planet at its current position.
+ * @param x - The x coordinate of the planet position.
+ * @param y - The y coordinate of the planet position.
+ * @param z - The z coordinate of the planet position.
+ * @param size - The size of the planet.
+ * @param img - The texture image for the planet.
+ * @param planetObj - The planet object containing its properties.
+ * @param zoom - The zoom factor forthe planet size and position.
+ * @param isSelected - A boolean indicating if the planet is selected.
+ */
 function drawPlanet(x, y, z, size, img, planetObj, zoom, isSelected) {
     push();
     noFill();
@@ -388,6 +441,10 @@ function drawPlanet(x, y, z, size, img, planetObj, zoom, isSelected) {
     pop();
 }
 
+/**
+ * @name drawGraphs
+ * @description Draw the energy graphs for the selected planet.
+ */
 function drawGraphs() {
     if (!energyHistory || energyHistory.length === 0) return;
 
@@ -451,6 +508,10 @@ function drawGraphs() {
     }
 }
 
+/**
+ * @name windowResized
+ * @description Handle window resize events to adjust the canvas size.
+ */
 function windowResized() {
     W = window.innerWidth || 1200;
     H = window.innerHeight || 800;
